@@ -1,1 +1,106 @@
-/* Infra Ledger. Uses Obsidian theme variables; brand colors only for markers. */
+/* Infra Ledger. Follows the active theme; brand colors only mark changed rows. */
+
+.infra-ledger-block {
+  --infra-ledger-margin: #b8432f;
+  margin: var(--size-4-2) 0;
+}
+.theme-dark .infra-ledger-block {
+  --infra-ledger-margin: #e07a5f;
+}
+
+.infra-ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-ui-small);
+}
+.infra-ledger-table th {
+  text-align: left;
+  font-weight: var(--font-semibold);
+  font-size: var(--font-ui-smaller);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: var(--size-4-1) var(--size-4-2);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.infra-ledger-table td {
+  padding: var(--size-4-2);
+  border-bottom: 1px solid var(--background-modifier-border);
+  vertical-align: middle;
+}
+.infra-ledger-row.is-changed td:first-child {
+  box-shadow: inset 2px 0 0 var(--infra-ledger-margin);
+}
+
+.infra-ledger-mono,
+.infra-ledger-kind {
+  font-family: var(--font-monospace);
+}
+.infra-ledger-kind,
+.infra-ledger-meta,
+.infra-ledger-note {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+.infra-ledger-meta {
+  font-family: var(--font-monospace);
+}
+.infra-ledger-secret {
+  white-space: nowrap;
+}
+.infra-ledger-secret .infra-ledger-mono {
+  margin-right: var(--size-4-1);
+  word-break: break-all;
+  white-space: normal;
+}
+
+.infra-ledger-actions {
+  white-space: nowrap;
+  text-align: right;
+}
+.infra-ledger-button {
+  display: inline-flex;
+  padding: var(--size-2-2);
+  vertical-align: middle;
+}
+
+.infra-ledger-row-notice td,
+.infra-ledger-ref-problem,
+.infra-ledger-warnings {
+  color: var(--text-warning);
+  font-size: var(--font-ui-smaller);
+}
+.infra-ledger-warnings {
+  margin: var(--size-4-1) 0 0;
+  padding-left: var(--size-4-4);
+}
+
+.infra-ledger-error {
+  display: flex;
+  gap: var(--size-4-2);
+  align-items: center;
+  padding: var(--size-4-2) var(--size-4-3);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  color: var(--text-error);
+}
+.infra-ledger-empty {
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  padding: var(--size-4-2) 0;
+}
+
+.infra-ledger-settings-statement {
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+}
+.infra-ledger-settings-statement.mod-warning {
+  color: var(--text-warning);
+}
+
+@media (max-width: 600px) {
+  .infra-ledger-table th:nth-child(3),
+  .infra-ledger-table td.infra-ledger-kind {
+    display: none;
+  }
+}
