@@ -104,3 +104,11 @@
     display: none;
   }
 }
+
+.infra-ledger-modal-hint {
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+}
+.infra-ledger-history td:last-child {
+  width: 1%;
+}

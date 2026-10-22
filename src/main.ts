@@ -1,7 +1,11 @@
-import { Notice, Plugin } from "obsidian";
+import { moment, Notice, Plugin, setIcon, setTooltip, TFile } from "obsidian";
+import { changeSecret, deleteHistoryEntry, type MutateResult } from "./creds/mutate";
 import { LedgerIndex } from "./index/ledger-index";
 import { DEFAULT_SETTINGS, InfraLedgerSettingTab, type InfraLedgerSettings } from "./settings";
 import { CredsBlockView } from "./ui/block-view";
+import { ChangePasswordModal } from "./ui/change-modal";
+import { CredentialPicker } from "./ui/credential-picker";
+import { HistoryModal } from "./ui/history-modal";
 import { ClipboardGuard } from "./util/clipboard";
 import type { Credential } from "./model";
 
@@ -19,6 +23,18 @@ export default class InfraLedgerPlugin extends Plugin {
     this.addSettingTab(new InfraLedgerSettingTab(this.app, this));
     this.registerMarkdownCodeBlockProcessor("creds", (source, el, ctx) => {
       ctx.addChild(new CredsBlockView(el, this, source, ctx.sourcePath));
+    });
+
+    this.addCommand({
+      id: "change-password",
+      name: "Change password",
+      checkCallback: (checking) => this.withNoteCredential(checking, (cred, path) => this.openChange(cred, path)),
+    });
+    this.addCommand({
+      id: "show-history",
+      name: "Show history",
+      checkCallback: (checking) =>
+        this.withNoteCredential(checking, (cred, path) => new HistoryModal(this.app, this, cred.id, path).open()),
     });
 
     this.app.workspace.onLayoutReady(async () => {
@@ -62,8 +78,86 @@ export default class InfraLedgerPlugin extends Plugin {
     new Notice(message);
   }
 
-  /** Write actions per row; filled in by later features. */
-  renderRowActions(_cell: HTMLElement, _cred: Credential, _path: string, _duplicate: boolean): void {}
+  notify(message: string): void {
+    new Notice(message);
+  }
+
+  /** Write actions shown next to the copy buttons of a credential row. */
+  renderRowActions(cell: HTMLElement, cred: Credential, path: string, duplicate: boolean): void {
+    this.iconButton(cell, "key-round", "Change password", () => {
+      if (duplicate) this.notify(`Duplicate id "${cred.id}". Rename one before editing.`);
+      else this.openChange(cred, path);
+    });
+    this.iconButton(cell, "history", "Show history", () => new HistoryModal(this.app, this, cred.id, path).open());
+  }
+
+  openChange(cred: Credential, path: string): void {
+    const ic = this.index.snapshot.byId.get(cred.id);
+    if (ic && ic.length > 1) {
+      this.notify(`Duplicate id "${cred.id}". Rename one before editing.`);
+      return;
+    }
+    new ChangePasswordModal(this.app, this, cred, path).open();
+  }
+
+  async changeSecret(path: string, id: string, secret: string, reason?: string): Promise<boolean> {
+    const ok = await this.applyMutation(path, (note) => changeSecret(note, id, secret, today(), reason));
+    if (ok) this.notify("Password changed. Previous value moved to history.");
+    return ok;
+  }
+
+  async deleteHistoryEntry(path: string, id: string, index: number): Promise<boolean> {
+    const ok = await this.applyMutation(path, (note) => deleteHistoryEntry(note, id, index));
+    if (ok) this.notify("History entry deleted.");
+    return ok;
+  }
+
+  /** Runs a pure mutation atomically on a note. On failure the note is left untouched. */
+  async applyMutation(path: string, mutate: (note: string) => MutateResult): Promise<boolean> {
+    const file = this.app.vault.getAbstractFileByPath(path);
+    if (!(file instanceof TFile)) {
+      this.notify(`Can't save: "${path}" no longer exists.`);
+      return false;
+    }
+    let failure: string | null = null;
+    await this.app.vault.process(file, (note) => {
+      const result = mutate(note);
+      if (!result.ok) {
+        failure = result.reason;
+        return note;
+      }
+      return result.note;
+    });
+    if (failure) {
+      this.notify(failure);
+      return false;
+    }
+    await this.index.refresh(file);
+    return true;
+  }
+
+  private withNoteCredential(checking: boolean, run: (cred: Credential, path: string) => void): boolean {
+    const file = this.app.workspace.getActiveFile();
+    if (!file) return false;
+    const creds = this.index.snapshot.credentials.filter((c) => c.path === file.path).map((c) => c.cred);
+    if (creds.length === 0) return false;
+    if (!checking) {
+      if (creds.length === 1) run(creds[0], file.path);
+      else new CredentialPicker(this.app, creds, (c) => run(c, file.path)).open();
+    }
+    return true;
+  }
+
+  private iconButton(parent: HTMLElement, icon: string, label: string, onClick: () => void): void {
+    const b = parent.createEl("button", { cls: "clickable-icon infra-ledger-button", attr: { "aria-label": label } });
+    setIcon(b, icon);
+    setTooltip(b, label);
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onClick();
+    });
+  }
 
   private showSyncHints(): void {
     for (const hint of this.index.snapshot.syncCopies) {
@@ -73,4 +167,8 @@ export default class InfraLedgerPlugin extends Plugin {
       new Notice(`"${hint.copyPath}" looks like a sync copy of "${hint.originalPath}". Keep one, delete the other.`, 10000);
     }
   }
+}
+
+function today(): string {
+  return moment().format("YYYY-MM-DD");
 }
