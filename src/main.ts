@@ -367,11 +367,18 @@ export default class InfraLedgerPlugin extends Plugin {
   private async openSideView(type: string): Promise<void> {
     const { workspace } = this.app;
     let leaf = workspace.getLeavesOfType(type)[0];
-    if (!leaf) {
+    if (leaf) {
+      // Obsidian 1.7+ restores side tabs lazily; a tab restored before this plugin registered its view
+      // keeps the type but holds an empty placeholder. Load it, and rebuild it if our view isn't there.
+      await (leaf as { loadIfDeferred?: () => Promise<void> }).loadIfDeferred?.();
+      if (!(leaf.view instanceof InventoryView) && !(leaf.view instanceof ScanView)) {
+        await leaf.setViewState({ type, active: true });
+      }
+    } else {
       leaf = workspace.getRightLeaf(false) ?? workspace.getLeaf(true);
       await leaf.setViewState({ type, active: true });
     }
-    workspace.revealLeaf(leaf);
+    await workspace.revealLeaf(leaf);
   }
 
   async addRelatedBlock(file: TFile): Promise<void> {

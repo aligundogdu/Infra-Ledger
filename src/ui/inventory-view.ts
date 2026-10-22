@@ -70,6 +70,19 @@ export class InventoryView extends ItemView {
   }
 
   private render(): void {
+    try {
+      this.draw();
+    } catch (e) {
+      // Show the failure in the panel itself, so a blank panel never hides a bug.
+      console.error("Infra Ledger inventory", e);
+      const root = this.contentEl;
+      root.empty();
+      root.createEl("p", { cls: "infra-ledger-modal-error", text: `The inventory couldn't be drawn: ${(e as Error).message}` });
+      root.createEl("pre", { cls: "infra-ledger-mono", text: (e as Error).stack ?? "" });
+    }
+  }
+
+  private draw(): void {
     const root = this.contentEl;
     root.empty();
     root.addClass("infra-ledger-inventory");
