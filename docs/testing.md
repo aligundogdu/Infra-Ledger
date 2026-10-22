@@ -60,6 +60,8 @@ Open `test-vault/` as a vault in Obsidian (Open another vault → Open folder as
 ## Inventory panel (0.4)
 
 - [ ] Ribbon list icon or "Open inventory" opens the panel in the right sidebar.
+- [ ] Narrow sidebar: one card per resource (name, then a muted line like `server · Infra Gensure · 2 creds`), no empty parts, no zero counts. Widen the sidebar past ~640px: a table appears; columns empty in every row are hidden.
+- [ ] Sort menu next to the filters changes the order in both layouts and follows header clicks.
 - [ ] Resources tab: every resource once, counts in Addr and Creds columns. Click a column header to sort, click again to reverse. Click a row to open the note.
 - [ ] Filters: type device, then holder Mehmet Kaya: only Laptop 07. Text `@work`: only Work space. Clearing a filter brings rows back.
 - [ ] People tab: Mehmet Kaya (link to person note) with Laptop 07 and its since date; Not assigned group with Office Printer.

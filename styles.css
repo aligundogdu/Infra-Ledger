@@ -316,3 +316,59 @@
   color: var(--text-error);
   font-size: var(--font-ui-small);
 }
+
+/* Inventory table: wide panels get a table, narrow ones (the usual sidebar) get one card per resource. */
+.infra-ledger-inventory {
+  container-type: inline-size;
+}
+.infra-ledger-inventory-table td.is-name {
+  font-weight: var(--font-medium);
+  min-width: 10em;
+}
+.infra-ledger-sort {
+  margin-left: auto;
+}
+@container (max-width: 640px) {
+  .infra-ledger-inventory-table,
+  .infra-ledger-inventory-table tbody,
+  .infra-ledger-inventory-table tr {
+    display: block;
+  }
+  .infra-ledger-inventory-table thead {
+    display: none;
+  }
+  .infra-ledger-inventory-table tr {
+    padding: var(--size-4-2) var(--size-4-1);
+    border-bottom: 1px solid var(--background-modifier-border);
+  }
+  .infra-ledger-inventory-table td {
+    display: inline;
+    padding: 0;
+    border: none;
+    min-width: 0;
+    text-align: left;
+  }
+  .infra-ledger-inventory-table td.is-name {
+    display: block;
+    margin-bottom: var(--size-2-1);
+  }
+  .infra-ledger-inventory-table td.is-meta {
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+  }
+  .infra-ledger-inventory-table td.is-meta:empty {
+    display: none;
+  }
+  .infra-ledger-inventory-table td.is-meta:not(:empty) ~ td.is-meta:not(:empty)::before {
+    content: " · ";
+  }
+  .infra-ledger-inventory-table td[data-unit]::after {
+    content: " " attr(data-unit);
+  }
+  .infra-ledger-inventory-table td.is-numeric:is(:empty, [data-zero]) {
+    display: none;
+  }
+  .infra-ledger-sort {
+    margin-left: 0;
+  }
+}

@@ -86,3 +86,8 @@ export function filterOptions(rows: InventoryRow[]): Record<OptionField, string[
   }
   return out;
 }
+
+/** Columns worth showing for these rows: name always, others only if some row has a value (or a count above 0). */
+export function usedColumns(rows: InventoryRow[], keys: SortKey[]): SortKey[] {
+  return keys.filter((k) => k === "name" || rows.some((r) => (typeof r[k] === "number" ? (r[k] as number) > 0 : !!r[k])));
+}

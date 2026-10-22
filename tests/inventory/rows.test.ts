@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildRows, filterOptions, filterRows, sortRows } from "../../src/inventory/rows";
+import { buildRows, filterOptions, filterRows, sortRows, usedColumns } from "../../src/inventory/rows";
 import { snapshot, SPACES } from "./fixture";
 
 const names = (rows: { name: string }[]) => rows.map((r) => r.name);
@@ -49,5 +49,16 @@ describe("filterOptions", () => {
     expect(o.space).toEqual(["Personal", "Work"]);
     expect(o.holder).toEqual(["Ayşe Yılmaz", "Guest"]);
     expect(o.location).toEqual(["FSN1", "Office 2F"]);
+  });
+});
+
+describe("usedColumns", () => {
+  it("keeps name and drops columns empty or zero in every row", () => {
+    const rows = filterRows(buildRows(snapshot), { text: "", type: "server" }, spaceNames);
+    expect(usedColumns(rows, ["name", "type", "detail", "location", "holder", "addresses", "credentials"])).toEqual([
+      "name", "type", "detail", "location", "addresses", "credentials",
+    ]);
+    const devices = filterRows(buildRows(snapshot), { text: "", type: "device" }, spaceNames);
+    expect(usedColumns(devices, ["name", "provider", "addresses"])).toEqual(["name"]);
   });
 });

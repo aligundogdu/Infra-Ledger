@@ -1,5 +1,8 @@
 import { ItemView, moment, setIcon, type WorkspaceLeaf } from "obsidian";
-import { buildRows, filterOptions, filterRows, sortRows, type Filters, type InventoryRow, type OptionField, type SortDir, type SortKey } from "../inventory/rows";
+import {
+  buildRows, filterOptions, filterRows, sortRows, usedColumns,
+  type Filters, type InventoryRow, type OptionField, type SortDir, type SortKey,
+} from "../inventory/rows";
 import { groupByHolder } from "../inventory/people";
 import { computeWarnings, type Warning, type WarningGroup } from "../inventory/warnings";
 import type InfraLedgerPlugin from "../main";
@@ -8,7 +11,7 @@ export const INVENTORY_VIEW = "infra-ledger-inventory";
 
 type Tab = "resources" | "people" | "warnings";
 
-const COLUMNS: { key: SortKey; title: string; numeric?: boolean }[] = [
+const COLUMNS: { key: SortKey; title: string; numeric?: boolean; unit?: string }[] = [
   { key: "name", title: "Name" },
   { key: "type", title: "Type" },
   { key: "space", title: "Space" },
@@ -16,8 +19,8 @@ const COLUMNS: { key: SortKey; title: string; numeric?: boolean }[] = [
   { key: "provider", title: "Provider" },
   { key: "location", title: "Location" },
   { key: "holder", title: "Holder" },
-  { key: "addresses", title: "Addr", numeric: true },
-  { key: "credentials", title: "Creds", numeric: true },
+  { key: "addresses", title: "Addr", numeric: true, unit: "addr" },
+  { key: "credentials", title: "Creds", numeric: true, unit: "cred" },
 ];
 
 const FILTER_FIELDS: { key: OptionField; title: string }[] = [
@@ -43,6 +46,7 @@ export class InventoryView extends ItemView {
   private sort: { key: SortKey; dir: SortDir } = { key: "name", dir: "asc" };
   private bodyEl!: HTMLElement;
   private tableEl: HTMLElement | null = null;
+  private sortSelect: HTMLSelectElement | null = null;
 
   constructor(leaf: WorkspaceLeaf, private readonly plugin: InfraLedgerPlugin) {
     super(leaf);
@@ -134,6 +138,20 @@ export class InventoryView extends ItemView {
       });
     }
 
+    // Column headers disappear in the narrow card layout, so sorting also has its own menu.
+    const sort = bar.createEl("select", { cls: "dropdown infra-ledger-sort" });
+    for (const col of COLUMNS) {
+      for (const dir of ["asc", "desc"] as const) {
+        sort.createEl("option", { text: `Sort: ${col.title} ${dir === "asc" ? "▲" : "▼"}`, value: `${col.key}:${dir}` });
+      }
+    }
+    sort.addEventListener("change", () => {
+      const [key, dir] = sort.value.split(":") as [SortKey, SortDir];
+      this.sort = { key, dir };
+      this.renderTable(rows);
+    });
+    this.sortSelect = sort;
+
     this.tableEl = this.bodyEl.createDiv({ cls: "infra-ledger-table-wrap" });
     this.renderTable(rows);
   }
@@ -143,6 +161,7 @@ export class InventoryView extends ItemView {
     wrap.empty();
     const spaces = this.plugin.namedSpaces().map((s) => s.name);
     const rows = sortRows(filterRows(all, this.filters, spaces), this.sort.key, this.sort.dir);
+    if (this.sortSelect) this.sortSelect.value = `${this.sort.key}:${this.sort.dir}`;
     if (rows.length === 0) {
       wrap.createDiv({
         cls: "infra-ledger-empty",
@@ -150,9 +169,11 @@ export class InventoryView extends ItemView {
       });
       return;
     }
-    const table = wrap.createEl("table", { cls: "infra-ledger-table" });
+    const used = new Set(usedColumns(rows, COLUMNS.map((c) => c.key)));
+    const columns = COLUMNS.filter((c) => used.has(c.key));
+    const table = wrap.createEl("table", { cls: "infra-ledger-table infra-ledger-inventory-table" });
     const head = table.createEl("thead").createEl("tr");
-    for (const col of COLUMNS) {
+    for (const col of columns) {
       const th = head.createEl("th", { cls: col.numeric ? "is-numeric" : "" });
       th.setText(col.title + (this.sort.key === col.key ? (this.sort.dir === "asc" ? " ▲" : " ▼") : ""));
       th.addEventListener("click", () => {
@@ -167,9 +188,15 @@ export class InventoryView extends ItemView {
     for (const r of rows) {
       const tr = body.createEl("tr", { cls: "infra-ledger-row is-clickable" });
       tr.addEventListener("click", (e) => this.openNote(r.path, e));
-      for (const col of COLUMNS) {
+      for (const col of columns) {
         const value = r[col.key];
-        tr.createEl("td", { text: value === undefined ? "" : String(value), cls: col.numeric ? "is-numeric" : "" });
+        const td = tr.createEl("td", {
+          text: value === undefined ? "" : String(value),
+          cls: [col.key === "name" ? "is-name" : "is-meta", col.numeric ? "is-numeric" : ""].filter(Boolean).join(" "),
+        });
+        // Units show only in the narrow card layout, where there are no column headers.
+        if (col.unit) td.dataset.unit = value === 1 || col.unit === "addr" ? col.unit : `${col.unit}s`;
+        if (value === 0) td.dataset.zero = "";
       }
     }
   }
