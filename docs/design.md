@@ -202,7 +202,7 @@ Saf moduller (`creds/*`, `util/generator.ts`, `util/ssh.ts`, arama esleme mantig
   - Yalnizca degisikligin yapildigi hedef `creds` blogunun ici yeniden bicimlenebilir (bos satirlar, blok scalar, tirnak bicimi). Orada garanti, icerigin yapisal dogrulugudur.
   - Notun geri kalani (frontmatter, serbest metin, diger code block'lar, diger `creds` bloklari) byte byte ayni kalir. Yazma, sadece hedef blogun icerik araligini degistirir.
 - Mobil destek: `isDesktopOnly: false`. Node API'si kullanilmaz; kripto icin Web Crypto.
-- Minimum Obsidian surumu: `vault.process` icin 1.1.0+ (mobil davranisi manuel test kapsaminda dogrulanir).
+- Minimum Obsidian surumu: 1.4.10 (API'ler 1.1.0'dan beri var ama eski surumler test edilmedi) (mobil davranisi manuel test kapsaminda dogrulanir).
 
 ## Hata yonetimi
 
@@ -246,7 +246,7 @@ Saf moduller (`creds/*`, `util/generator.ts`, `util/ssh.ts`, arama esleme mantig
 ## Yayin oncesi kontrol listesi
 
 - Community Plugins katalogunda `infra-ledger` id ve "Infra Ledger" adi tekrar kontrol edilir (ilk kontrol 2026-10-22, bos).
-- `minAppVersion` = 1.1.0 (`vault.process`) dogrulanir; kod blogu processor'unun ve pano temizliginin mobilde manuel test edilmesi.
+- `minAppVersion` = 1.4.10 (test edilmemis eski surumler icin soz verilmez); kod blogu processor'unun ve pano temizliginin mobilde manuel test edilmesi.
 - Manifest teyit edilir: `isDesktopOnly: false`; Node API kullanilmiyor (yalnizca Web Crypto).
 
 ---

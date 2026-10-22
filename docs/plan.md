@@ -13,7 +13,7 @@
 ## Global constraints
 
 - Plugin id `infra-ledger`, name `Infra Ledger`, code block language `creds`.
-- `isDesktopOnly: false`, `minAppVersion: 1.1.0`. No Node APIs in `src/`; crypto through Web Crypto only.
+- `isDesktopOnly: false`, `minAppVersion: 1.4.10`. No Node APIs in `src/`; crypto through Web Crypto only.
 - Core fields (`id, label, user, secret, kind, note, ref, reason`) are always strings read from raw source text, never from YAML-coerced values.
 - Writes go through `vault.process()`. Only the target `creds` block's content may change; every other byte of the note stays identical.
 - Plugin writes `secret` values double-quoted.
@@ -71,7 +71,7 @@ tests/                       vitest specs mirroring src/
 - [ ] `package.json` scripts: `dev` (esbuild watch), `build` (`tsc --noEmit && node esbuild.config.mjs production`), `test` (`vitest run`), `lint` (`tsc --noEmit`).
 - [ ] Dev deps: `obsidian`, `typescript@5`, `esbuild`, `vitest`, `@types/node` (build scripts only). Runtime dep: `yaml`.
 - [ ] esbuild bundles `src/main.ts` to `main.js`, cjs, `external: ["obsidian", "electron", "@codemirror/*", "@lezer/*"]`, target es2020.
-- [ ] `manifest.json` with id, name, version `0.1.0`, `minAppVersion: 1.1.0`, description from `brand/brand.md`, author, `isDesktopOnly: false`.
+- [ ] `manifest.json` with id, name, version `0.1.0`, `minAppVersion: 1.4.10`, description from `brand/brand.md`, author, `isDesktopOnly: false`.
 - [ ] Minimal `main.ts` that loads and unloads.
 - [ ] CI workflow: `npm ci`, `npm test`, `npm run build` on push and PR.
 - [ ] Smoke test passes, build produces `main.js`. Commit `chore: scaffold plugin, build and ci`, push.

@@ -2,7 +2,7 @@
   "id": "infra-ledger",
   "name": "Infra Ledger",
   "version": "0.6.0",
-  "minAppVersion": "1.1.0",
+  "minAppVersion": "1.4.10",
   "description": "Track servers, databases and cloud accounts in your notes. Keep a history of every password change, search and copy credentials fast, optionally encrypt secrets.",
   "author": "Ali Gündoğdu",
   "authorUrl": "https://github.com/aligundogdu",

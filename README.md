@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/aligundogdu/Infra-Ledger/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/aligundogdu/Infra-Ledger/ci.yml?branch=main&style=flat-square&label=ci&color=2D6A4F"></a>
   <a href="https://github.com/aligundogdu/Infra-Ledger/releases"><img alt="Release" src="https://img.shields.io/github/v/release/aligundogdu/Infra-Ledger?style=flat-square&color=2D6A4F&include_prereleases"></a>
-  <img alt="Obsidian" src="https://img.shields.io/badge/obsidian-%E2%89%A5%201.1.0-15191E?style=flat-square&logo=obsidian&logoColor=white">
+  <img alt="Obsidian" src="https://img.shields.io/badge/obsidian-%E2%89%A5%201.4.10-15191E?style=flat-square&logo=obsidian&logoColor=white">
   <img alt="Platforms" src="https://img.shields.io/badge/platforms-desktop%20%C2%B7%20mobile-15191E?style=flat-square">
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/github/license/aligundogdu/Infra-Ledger?style=flat-square&color=B8432F"></a>
 </p>
