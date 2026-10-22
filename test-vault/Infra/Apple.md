@@ -1,6 +1,7 @@
 ---
 type: cloud
 url: https://business.apple.com
+assigned_to: "[[Mehmet Kaya]]"
 ---
 
 # Apple

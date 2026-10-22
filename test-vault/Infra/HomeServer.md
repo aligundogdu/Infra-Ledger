@@ -52,5 +52,6 @@ Proxmox host in the closet. Free text stays untouched by the plugin.
   user: appuser
   secret: 0123456
   kind: db
+  updated: 2025-12-01
 - ref: forge-shared-key
 ```

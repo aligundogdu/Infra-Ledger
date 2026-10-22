@@ -24,6 +24,7 @@ import { CredentialPicker } from "./ui/credential-picker";
 import { HistoryModal } from "./ui/history-modal";
 import { NewResourceModal } from "./ui/new-resource";
 import { SearchModal } from "./ui/search-modal";
+import { INVENTORY_VIEW, InventoryView } from "./ui/inventory-view";
 import { ClipboardGuard } from "./util/clipboard";
 import { migrateSpaces, type Space } from "./spaces";
 import type { Credential } from "./model";
@@ -65,6 +66,9 @@ export default class InfraLedgerPlugin extends Plugin {
 
     addIcon(RIBBON_ICON_ID, RIBBON_ICON);
     this.addRibbonIcon(RIBBON_ICON_ID, "Infra Ledger: Search", () => new SearchModal(this.app, this).open());
+    this.registerView(INVENTORY_VIEW, (leaf) => new InventoryView(leaf, this));
+    this.addRibbonIcon("layout-list", "Infra Ledger: Inventory", () => void this.openInventory());
+    this.addCommand({ id: "open-inventory", name: "Open inventory", callback: () => void this.openInventory() });
 
     this.addCommand({
       id: "new-resource",
@@ -155,6 +159,10 @@ export default class InfraLedgerPlugin extends Plugin {
   async saveSettings(): Promise<void> {
     await this.saveData(this.settings);
     this.index?.reindexSpaces();
+    // Warning thresholds live in settings; repaint open inventory panels.
+    for (const leaf of this.app.workspace.getLeavesOfType(INVENTORY_VIEW)) {
+      if (leaf.view instanceof InventoryView) leaf.view.refresh();
+    }
   }
 
   /** Spaces with a name, in settings order. */
@@ -246,6 +254,16 @@ export default class InfraLedgerPlugin extends Plugin {
     const ok = await this.applyMutation(path, (note) => deleteHistoryEntry(note, id, index));
     if (ok) this.notify("History entry deleted.");
     return ok;
+  }
+
+  async openInventory(): Promise<void> {
+    const { workspace } = this.app;
+    let leaf = workspace.getLeavesOfType(INVENTORY_VIEW)[0];
+    if (!leaf) {
+      leaf = workspace.getRightLeaf(false) ?? workspace.getLeaf(true);
+      await leaf.setViewState({ type: INVENTORY_VIEW, active: true });
+    }
+    workspace.revealLeaf(leaf);
   }
 
   openAssign(path: string): void {

@@ -8,6 +8,8 @@ export interface InfraLedgerSettings {
   lastSpace?: string;
   clipboardClearSec: number;
   revealSec: number;
+  warrantyWarnDays: number;
+  passwordMaxAgeDays: number;
   generator: GeneratorOptions;
 }
 
@@ -15,6 +17,8 @@ export const DEFAULT_SETTINGS: InfraLedgerSettings = {
   spaces: DEFAULT_SPACES,
   clipboardClearSec: 30,
   revealSec: 10,
+  warrantyWarnDays: 30,
+  passwordMaxAgeDays: 180,
   generator: { length: 24, symbols: true, excludeAmbiguous: true },
 };
 
@@ -101,6 +105,24 @@ export class InfraLedgerSettingTab extends PluginSettingTab {
       .setDesc("A secret shown with the eye button is masked again after this many seconds.")
       .addText((t) => numberInput(t, s.revealSec, 1, 600, async (n) => {
         s.revealSec = n;
+        await this.plugin.saveSettings();
+      }));
+
+    new Setting(containerEl).setName("Inventory warnings").setHeading();
+
+    new Setting(containerEl)
+      .setName("Warranty ending within (days)")
+      .setDesc("Devices whose warranty_until is this close or already past show up under Warnings. 0 turns it off.")
+      .addText((t) => numberInput(t, s.warrantyWarnDays, 0, 3650, async (n) => {
+        s.warrantyWarnDays = n;
+        await this.plugin.saveSettings();
+      }));
+
+    new Setting(containerEl)
+      .setName("Password older than (days)")
+      .setDesc("Credentials whose updated date is older than this show up under Warnings. 0 turns it off.")
+      .addText((t) => numberInput(t, s.passwordMaxAgeDays, 0, 3650, async (n) => {
+        s.passwordMaxAgeDays = n;
         await this.plugin.saveSettings();
       }));
 

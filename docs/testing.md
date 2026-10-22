@@ -57,6 +57,16 @@ Open `test-vault/` as a vault in Obsidian (Open another vault → Open folder as
 - [ ] Search `macbook`, `C02XYZ`, `ayse`, `office 2f`: Laptop 07. Subtitle shows "with <name>". People and locations show without SSH actions.
 - [ ] New resource → device: template with hardware fields, network, creds and ledger blocks. person and location: no creds block.
 
+## Inventory panel (0.4)
+
+- [ ] Ribbon list icon or "Open inventory" opens the panel in the right sidebar.
+- [ ] Resources tab: every resource once, counts in Addr and Creds columns. Click a column header to sort, click again to reverse. Click a row to open the note.
+- [ ] Filters: type device, then holder Mehmet Kaya: only Laptop 07. Text `@work`: only Work space. Clearing a filter brings rows back.
+- [ ] People tab: Mehmet Kaya (link to person note) with Laptop 07 and its since date; Not assigned group with Office Printer.
+- [ ] Assign Laptop 07 to Ayşe: People tab moves it without reopening the panel.
+- [ ] Warnings tab: Office Printer warranty ends soon; postgres app on HomeServer changed long ago; count of credentials without a change date; duplicate `homeserver-root`; ref `missing-id`; sync copy; block problems for Scratch.md and the 99999 port. Clicking a line opens the note.
+- [ ] Settings: set warranty days to 0, the warranty group disappears.
+
 ## Mobile
 
 - [ ] Block renders and fits a phone screen (kind column hidden).

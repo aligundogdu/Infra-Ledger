@@ -32,6 +32,7 @@ Everything is plain Markdown. Remove the plugin and your notes still read fine.
 - **Network details.** Several public, private and VPN addresses per server with interface, MAC, gateway, VLAN and any field you add. Pick which address the SSH command uses.
 - **Clipboard that cleans up.** Copied secrets are cleared after 30 seconds (configurable).
 - **Devices and assignments.** Hardware details, who has which device, and a log of assignments, returns, repairs and moves.
+- **Inventory panel.** One sortable table of everything with filters, a "who has what" list, and warnings for warranties running out, old passwords, duplicate ids, broken refs and block errors.
 - **Desktop and mobile.** No Node APIs, works on iOS and Android.
 
 ## The format
@@ -132,6 +133,7 @@ Rules worth knowing:
 | Command | What it does |
 |---|---|
 | Search | Find a resource or credential and copy from it |
+| Open inventory | Side panel with Resources, People and Warnings |
 | New resource | Create a resource note from a template |
 | Add credential | Add a credential to the current note |
 | Add address | Add an ip or host to the current note's network block |
