@@ -1,4 +1,4 @@
-import { addIcon, moment, Notice, Plugin, setIcon, setTooltip, TFile } from "obsidian";
+import { addIcon, moment, Notice, Plugin, setIcon, setTooltip, TFile, type WorkspaceLeaf } from "obsidian";
 import {
   addCredential,
   changeSecret,
@@ -366,19 +366,22 @@ export default class InfraLedgerPlugin extends Plugin {
 
   private async openSideView(type: string): Promise<void> {
     const { workspace } = this.app;
-    let leaf = workspace.getLeavesOfType(type)[0];
-    if (leaf) {
-      // Obsidian 1.7+ restores side tabs lazily; a tab restored before this plugin registered its view
-      // keeps the type but holds an empty placeholder. Load it, and rebuild it if our view isn't there.
-      await (leaf as { loadIfDeferred?: () => Promise<void> }).loadIfDeferred?.();
-      if (!(leaf.view instanceof InventoryView) && !(leaf.view instanceof ScanView)) {
-        await leaf.setViewState({ type, active: true });
-      }
-    } else {
+    const isOurs = (l: WorkspaceLeaf) => l.view instanceof (type === INVENTORY_VIEW ? InventoryView : ScanView);
+    // A tab restored from an earlier session or left over from a plugin reload can carry our view type
+    // with a dead or placeholder view inside; setViewState with the same type doesn't rebuild it.
+    // Keep a live one, close the rest, and open a fresh tab when none is live.
+    const existing = workspace.getLeavesOfType(type);
+    for (const l of existing) await (l as { loadIfDeferred?: () => Promise<void> }).loadIfDeferred?.();
+    let leaf = existing.find(isOurs);
+    for (const l of existing) if (l !== leaf) l.detach();
+    if (!leaf) {
       leaf = workspace.getRightLeaf(false) ?? workspace.getLeaf(true);
       await leaf.setViewState({ type, active: true });
     }
     await workspace.revealLeaf(leaf);
+    if (!isOurs(leaf) || leaf.view.containerEl.querySelector(".view-content")?.childElementCount === 0) {
+      new Notice(`Infra Ledger: the ${type} tab opened empty (view "${leaf.view.getViewType()}", ${leaf.view.constructor.name}). Please report this.`, 15000);
+    }
   }
 
   async addRelatedBlock(file: TFile): Promise<void> {
