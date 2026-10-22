@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildIndex, resourceFromFrontmatter, type FileRecord } from "../../src/index/core";
+import { buildIndex, parseAddresses, parsePorts, resourceFromFrontmatter, type FileRecord } from "../../src/index/core";
 import { parseCredsBlock } from "../../src/creds/parse";
 
 function file(path: string, fm: Record<string, unknown> | null, ...blocks: string[]): FileRecord {
@@ -13,8 +13,8 @@ describe("resourceFromFrontmatter", () => {
       type: "server", ip: "10.0.0.4", provider: "proxmox", env: "home", ssh_port: 2222, tags: ["homelab", "pve"],
     });
     expect(r).toEqual({
-      path: "Infra/Home.md", name: "Home", type: "server", ip: "10.0.0.4", provider: "proxmox",
-      env: "home", sshPort: 2222, tags: ["homelab", "pve"],
+      path: "Infra/Home.md", name: "Home", type: "server", provider: "proxmox", env: "home", sshPort: 2222,
+      tags: ["homelab", "pve"], ips: [{ value: "10.0.0.4" }], hosts: [], ports: [], space: null, warnings: [],
     });
   });
   it("maps unknown types to other and returns null without a type", () => {
@@ -31,7 +31,56 @@ describe("resourceFromFrontmatter", () => {
   });
 });
 
+describe("parseAddresses", () => {
+  it("accepts a single value, a list and labels", () => {
+    expect(parseAddresses("10.0.0.4")).toEqual([{ value: "10.0.0.4" }]);
+    expect(parseAddresses(["85.10.20.30 public", "10.0.0.4   private net", "", null])).toEqual([
+      { value: "85.10.20.30", label: "public" },
+      { value: "10.0.0.4", label: "private net" },
+    ]);
+    expect(parseAddresses(undefined)).toEqual([]);
+    expect(parseAddresses("  ")).toEqual([]);
+  });
+});
+
+describe("parsePorts", () => {
+  it("parses numbers, labelled strings and reports invalid rows", () => {
+    expect(parsePorts(443)).toEqual({ ports: [{ port: 443 }], invalid: [] });
+    expect(parsePorts(["443 https", "5432 postgres", 8006, "abc web", "70000", ""])).toEqual({
+      ports: [{ port: 443, label: "https" }, { port: 5432, label: "postgres" }, { port: 8006 }],
+      invalid: ["abc web", "70000"],
+    });
+  });
+});
+
+describe("spaces", () => {
+  const spaces = [
+    { name: "Personal", folder: "Personal" },
+    { name: "Work", folder: "Work" },
+    { name: "Work prod", folder: "Work/Prod" },
+  ];
+  it("assigns the longest matching folder and leaves others without a space", () => {
+    const s = buildIndex(
+      [
+        file("Work/Prod/DB.md", { type: "database" }, "- id: a\n  label: a\n"),
+        file("Work/Box.md", { type: "server" }),
+        file("Personal/Home.md", { type: "server" }),
+        file("Workshop/Note.md", null, "- id: b\n  label: b\n"),
+      ],
+      spaces,
+    );
+    const byName = Object.fromEntries(s.resources.map((r) => [r.name, r.space]));
+    expect(byName).toEqual({ DB: "Work prod", Box: "Work", Home: "Personal" });
+    expect(s.credentials.map((c) => [c.cred.id, c.space])).toEqual([["a", "Work prod"], ["b", null]]);
+  });
+});
+
 describe("buildIndex", () => {
+  it("reports invalid ports as file issues", () => {
+    const s = buildIndex([file("A.md", { type: "server", ports: ["99999 nope"] })]);
+    expect(s.resources[0].warnings).toEqual(['Port "99999 nope" is not a number between 1 and 65535.']);
+  });
+
   it("indexes resources, credentials and orphans", () => {
     const s = buildIndex([
       file("Home.md", { type: "server" }, "- id: home-root\n  label: root\n"),

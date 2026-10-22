@@ -1,9 +1,10 @@
 import { App, Modal, normalizePath, Setting, TFile } from "obsidian";
 import type { ResourceType } from "../index/core";
+import type { Space } from "../spaces";
 import type InfraLedgerPlugin from "../main";
 
 const FIELDS: Record<ResourceType, string[]> = {
-  server: ["ip", "host", "provider", "env", "ssh_port: 22"],
+  server: ["ip", "host", "provider", "env", "ssh_port: 22", "ports: []"],
   database: ["host", "provider", "env"],
   cloud: ["provider", "url"],
   service: ["url", "provider", "env"],
@@ -20,9 +21,12 @@ export function resourceTemplate(type: ResourceType, name: string): string {
 export class NewResourceModal extends Modal {
   private type: ResourceType = "server";
   private name = "";
+  private space: Space;
 
   constructor(app: App, private readonly plugin: InfraLedgerPlugin) {
     super(app);
+    const spaces = plugin.namedSpaces();
+    this.space = spaces.find((s) => s.name === plugin.settings.lastSpace) ?? spaces[0] ?? { name: "", folder: "" };
   }
 
   override onOpen(): void {
@@ -34,9 +38,21 @@ export class NewResourceModal extends Modal {
       d.setValue(this.type).onChange((v) => (this.type = v as ResourceType));
     });
 
-    new Setting(contentEl)
+    const spaces = this.plugin.namedSpaces();
+    let where!: Setting;
+    const describeWhere = () => where.setDesc(`Created in "${this.space.folder || "/"}".`);
+    if (spaces.length > 1) {
+      new Setting(contentEl).setName("Space").addDropdown((d) => {
+        spaces.forEach((sp, i) => d.addOption(String(i), sp.name));
+        d.setValue(String(spaces.indexOf(this.space))).onChange((v) => {
+          this.space = spaces[Number(v)];
+          describeWhere();
+        });
+      });
+    }
+
+    where = new Setting(contentEl)
       .setName("Name")
-      .setDesc(`Created in "${this.plugin.settings.resourceFolder || "/"}".`)
       .addText((t) => {
         t.setPlaceholder("HomeServer");
         t.onChange((v) => (this.name = v.trim()));
@@ -45,6 +61,7 @@ export class NewResourceModal extends Modal {
         });
         window.setTimeout(() => t.inputEl.focus(), 0);
       });
+    describeWhere();
 
     new Setting(contentEl)
       .addButton((b) => b.setButtonText("Cancel").onClick(() => this.close()))
@@ -64,7 +81,7 @@ export class NewResourceModal extends Modal {
       this.plugin.notify('A name can\'t contain \\ / : * ? " < > | # ^ [ ].');
       return;
     }
-    const folder = this.plugin.settings.resourceFolder;
+    const folder = this.space.folder;
     const path = normalizePath(folder ? `${folder}/${this.name}.md` : `${this.name}.md`);
     const vault = this.app.vault;
     if (vault.getAbstractFileByPath(path)) {
@@ -73,6 +90,10 @@ export class NewResourceModal extends Modal {
     }
     if (folder && !vault.getAbstractFileByPath(normalizePath(folder))) await vault.createFolder(normalizePath(folder));
     const file: TFile = await vault.create(path, resourceTemplate(this.type, this.name));
+    if (this.space.name) {
+      this.plugin.settings.lastSpace = this.space.name;
+      await this.plugin.saveSettings();
+    }
     this.close();
     await this.app.workspace.getLeaf(false).openFile(file);
   }

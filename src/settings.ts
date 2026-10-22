@@ -1,16 +1,18 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import type { GeneratorOptions } from "./util/generator";
+import { cleanFolder, DEFAULT_SPACES, type Space } from "./spaces";
 import type InfraLedgerPlugin from "./main";
 
 export interface InfraLedgerSettings {
-  resourceFolder: string;
+  spaces: Space[];
+  lastSpace?: string;
   clipboardClearSec: number;
   revealSec: number;
   generator: GeneratorOptions;
 }
 
 export const DEFAULT_SETTINGS: InfraLedgerSettings = {
-  resourceFolder: "Infra",
+  spaces: DEFAULT_SPACES,
   clipboardClearSec: 30,
   revealSec: 10,
   generator: { length: 24, symbols: true, excludeAmbiguous: true },
@@ -38,14 +40,49 @@ export class InfraLedgerSettingTab extends PluginSettingTab {
     });
 
     new Setting(containerEl)
-      .setName("Resource folder")
-      .setDesc("Where new resource notes are created. Resources and creds blocks are found anywhere in the vault.")
-      .addText((t) =>
-        t.setPlaceholder("Infra").setValue(s.resourceFolder).onChange(async (v) => {
-          s.resourceFolder = v.trim().replace(/^\/+|\/+$/g, "");
-          await this.plugin.saveSettings();
-        }),
-      );
+      .setName("Spaces")
+      .setDesc(
+        "Name a folder per area, e.g. Personal and Work. New resources go into the space you pick, and search " +
+          "takes @work to show one space only. Notes outside these folders are still found.",
+      )
+      .setHeading();
+
+    s.spaces.forEach((space, i) => {
+      new Setting(containerEl)
+        .addText((t) =>
+          t.setPlaceholder("Name").setValue(space.name).onChange(async (v) => {
+            space.name = v.trim();
+            await this.plugin.saveSettings();
+          }),
+        )
+        .addText((t) =>
+          t.setPlaceholder("Folder, e.g. Work/Infra").setValue(space.folder).onChange(async (v) => {
+            space.folder = cleanFolder(v);
+            await this.plugin.saveSettings();
+          }),
+        )
+        .addExtraButton((b) =>
+          b
+            .setIcon("trash-2")
+            .setTooltip("Remove space")
+            .setDisabled(s.spaces.length === 1)
+            .onClick(async () => {
+              s.spaces.splice(i, 1);
+              await this.plugin.saveSettings();
+              this.display();
+            }),
+        );
+    });
+
+    new Setting(containerEl).addButton((b) =>
+      b.setButtonText("Add space").onClick(async () => {
+        s.spaces.push({ name: "", folder: "" });
+        await this.plugin.saveSettings();
+        this.display();
+      }),
+    );
+
+    new Setting(containerEl).setName("Clipboard and display").setHeading();
 
     new Setting(containerEl)
       .setName("Clear clipboard after (seconds)")

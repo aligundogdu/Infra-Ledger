@@ -2,6 +2,7 @@ import { App, Events, TAbstractFile, TFile } from "obsidian";
 import { findCredsBlocks } from "../creds/locate";
 import { parseCredsBlock } from "../creds/parse";
 import { buildIndex, EMPTY_SNAPSHOT, type FileRecord, type LedgerSnapshot } from "./core";
+import type { Space } from "../spaces";
 
 const DEBOUNCE_MS = 300;
 
@@ -12,8 +13,16 @@ export class LedgerIndex extends Events {
   private pending = new Set<string>();
   private timer: number | null = null;
 
-  constructor(private readonly app: App) {
+  constructor(
+    private readonly app: App,
+    private readonly spaces: () => Space[],
+  ) {
     super();
+  }
+
+  /** Re-assigns spaces after the settings change; no files are read. */
+  reindexSpaces(): void {
+    this.rebuild();
   }
 
   async scanAll(): Promise<void> {
@@ -95,7 +104,7 @@ export class LedgerIndex extends Events {
 
   private rebuild(): void {
     const files = [...this.records.values()].sort((a, b) => a.path.localeCompare(b.path));
-    this.snapshot = buildIndex(files);
+    this.snapshot = buildIndex(files, this.spaces().filter((s) => s.name !== ""));
     this.trigger("changed", this.snapshot);
   }
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { findBlockWithId, findCredsBlocks } from "../../src/creds/locate";
+import { findBlockWithId, findCredsBlocks, firstCredsBlockLine } from "../../src/creds/locate";
 
 describe("findCredsBlocks", () => {
   it("finds every creds block with exact offsets", () => {
@@ -44,5 +44,13 @@ describe("findBlockWithId", () => {
 
   it("does not match refs", () => {
     expect(findBlockWithId("```creds\n- ref: a\n```\n", "a")).toBeNull();
+  });
+});
+
+describe("firstCredsBlockLine", () => {
+  it("returns the 0-based line of the first creds fence", () => {
+    const note = "---\ntype: server\n---\n\n```yaml\na: 1\n```\n\n```creds\n- ref: x\n```\n```creds\n```\n";
+    expect(firstCredsBlockLine(note)).toBe(8);
+    expect(firstCredsBlockLine("no blocks")).toBeNull();
   });
 });

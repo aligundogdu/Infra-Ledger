@@ -31,8 +31,18 @@ Open `test-vault/` as a vault in Obsidian (Open another vault → Open folder as
 - [ ] Settings: values persist after reload; security statement visible.
 - [ ] Light and dark theme both readable.
 
+## Spaces and addresses (0.2)
+
+- [ ] Settings → Spaces: add `Work` → `Work`. Rename `Infra` to `Personal`.
+- [ ] Search subtitles show `Personal · ...` and `Work · ...`. `@work` lists only Mail Server, `@p root` only Personal results, `@nope` explains the available spaces.
+- [ ] HomeServer shows chips `192.168.1.10 lan`, `100.64.0.7 tailscale`, `8006 proxmox`, `5432 postgres` above the first block, and a warning for port `99999 typo`. Clicking a chip copies the value.
+- [ ] Search `tailscale root`, Cmd/Ctrl+Enter: address picker with both ips; picking one copies `ssh -p 22 root@<ip>`.
+- [ ] Mail Server (one ip, one host): picker shows both. Forge (no address): Notice explains there is no SSH command.
+- [ ] New resource with two spaces: space dropdown, note lands in the chosen folder, the choice is remembered next time.
+- [ ] An old `data.json` with `resourceFolder` loads as one space.
+
 ## Mobile
 
 - [ ] Block renders and fits a phone screen (kind column hidden).
 - [ ] Copy works; clipboard is emptied after the delay.
-- [ ] Search: tapping a result opens the action menu.
+- [ ] Search: tapping a result opens the action menu, with one SSH row per address.

@@ -140,3 +140,23 @@
   font-size: var(--font-ui-smaller);
   font-family: var(--font-monospace);
 }
+
+.infra-ledger-resource {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--size-4-1);
+  margin-bottom: var(--size-4-2);
+}
+.infra-ledger-chip {
+  font-size: var(--font-ui-smaller);
+  padding: var(--size-2-1) var(--size-4-2);
+  height: auto;
+  border-radius: var(--radius-s);
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: none;
+  color: var(--text-normal);
+}
+.infra-ledger-chip:hover {
+  background: var(--background-modifier-hover);
+}

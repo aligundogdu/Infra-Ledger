@@ -80,3 +80,12 @@ export function findBlockWithId(note: string, id: string): BlockLocation | null 
   }
   return null;
 }
+
+/** 0-based line number where the note's first creds block starts, or null. */
+export function firstCredsBlockLine(note: string): number | null {
+  const first = findCredsBlocks(note)[0];
+  if (!first) return null;
+  let line = 0;
+  for (let i = 0; i < first.start; i++) if (note.charCodeAt(i) === 10) line++;
+  return line;
+}

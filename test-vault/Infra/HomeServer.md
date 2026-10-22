@@ -1,9 +1,15 @@
 ---
 type: server
-ip: 192.168.1.10
+ip:
+  - 192.168.1.10 lan
+  - 100.64.0.7 tailscale
 provider: proxmox
 env: home
 ssh_port: 22
+ports:
+  - 8006 proxmox
+  - 5432 postgres
+  - 99999 typo
 tags: [homelab]
 ---
 

@@ -1,19 +1,34 @@
 import type { BlockIssue, Credential, CredRef, ParseResult } from "../model";
+import { spaceOf, type Space } from "../spaces";
 
 export type ResourceType = "server" | "database" | "cloud" | "service" | "other";
 const RESOURCE_TYPES: readonly string[] = ["server", "database", "cloud", "service", "other"];
+
+export interface Address {
+  value: string;
+  label?: string;
+}
+
+export interface Port {
+  port: number;
+  label?: string;
+}
 
 export interface Resource {
   path: string;
   name: string;
   type: ResourceType;
-  ip?: string;
-  host?: string;
+  ips: Address[];
+  hosts: Address[];
+  ports: Port[];
   url?: string;
   provider?: string;
   env?: string;
   sshPort: number;
   tags: string[];
+  space: string | null;
+  /** Problems in the properties, shown to the user. */
+  warnings: string[];
 }
 
 export interface FileRecord {
@@ -27,6 +42,7 @@ export interface IndexedCredential {
   cred: Credential;
   path: string;
   resource: Resource | null;
+  space: string | null;
   duplicate: boolean;
 }
 
@@ -57,24 +73,64 @@ export function resourceFromFrontmatter(
   path: string,
   basename: string,
   fm: Record<string, unknown> | null,
+  space: string | null = null,
 ): Resource | null {
   if (!fm || fm.type === undefined || fm.type === null || fm.type === "") return null;
   const type = String(fm.type).toLowerCase();
+  const { ports, invalid } = parsePorts(fm.ports);
   const resource: Resource = {
     path,
     name: basename,
     type: (RESOURCE_TYPES.includes(type) ? type : "other") as ResourceType,
+    ips: parseAddresses(fm.ip),
+    hosts: parseAddresses(fm.host),
+    ports,
     sshPort: toPort(fm.ssh_port),
     tags: toTags(fm.tags),
+    space,
+    warnings: invalid.map((row) => `Port "${row}" is not a number between 1 and 65535.`),
   };
-  for (const key of ["ip", "host", "url", "provider", "env"] as const) {
+  for (const key of ["url", "provider", "env"] as const) {
     const v = fm[key];
     if (v !== undefined && v !== null && v !== "") resource[key] = String(v);
   }
   return resource;
 }
 
-export function buildIndex(files: FileRecord[]): LedgerSnapshot {
+/** One value or a list; each row is "value optional label". */
+export function parseAddresses(value: unknown): Address[] {
+  return rows(value).map((row) => {
+    const [head, ...rest] = row.split(/\s+/);
+    const label = rest.join(" ");
+    return label ? { value: head, label } : { value: head };
+  });
+}
+
+export function parsePorts(value: unknown): { ports: Port[]; invalid: string[] } {
+  const ports: Port[] = [];
+  const invalid: string[] = [];
+  for (const row of rows(value)) {
+    const [head, ...rest] = row.split(/\s+/);
+    const port = /^\d+$/.test(head) ? Number(head) : NaN;
+    if (!Number.isInteger(port) || port < 1 || port > 65535) {
+      invalid.push(row);
+      continue;
+    }
+    const label = rest.join(" ");
+    ports.push(label ? { port, label } : { port });
+  }
+  return { ports, invalid };
+}
+
+function rows(value: unknown): string[] {
+  const list = Array.isArray(value) ? value : [value];
+  return list
+    .filter((v) => v !== undefined && v !== null)
+    .map((v) => String(v).trim())
+    .filter(Boolean);
+}
+
+export function buildIndex(files: FileRecord[], spaces: Space[] = []): LedgerSnapshot {
   const resources: Resource[] = [];
   const credentials: IndexedCredential[] = [];
   const pendingRefs: { ref: CredRef; path: string }[] = [];
@@ -82,7 +138,8 @@ export function buildIndex(files: FileRecord[]): LedgerSnapshot {
   const issues = new Map<string, BlockIssue[]>();
 
   for (const f of files) {
-    const resource = resourceFromFrontmatter(f.path, f.basename, f.frontmatter);
+    const space = spaceOf(f.path, spaces);
+    const resource = resourceFromFrontmatter(f.path, f.basename, f.frontmatter, space);
     if (resource) resources.push(resource);
     const fileIssues = f.blocks.flatMap((b) => b.issues);
     if (fileIssues.length > 0) issues.set(f.path, fileIssues);
@@ -92,7 +149,7 @@ export function buildIndex(files: FileRecord[]): LedgerSnapshot {
           pendingRefs.push({ ref: entry, path: f.path });
           continue;
         }
-        const ic: IndexedCredential = { cred: entry, path: f.path, resource, duplicate: false };
+        const ic: IndexedCredential = { cred: entry, path: f.path, resource, space, duplicate: false };
         credentials.push(ic);
         const list = byId.get(entry.id);
         if (list) list.push(ic);

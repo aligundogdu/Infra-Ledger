@@ -8,6 +8,7 @@ import {
   type NewCredential,
 } from "./creds/mutate";
 import { LedgerIndex } from "./index/ledger-index";
+import { firstCredsBlockLine } from "./creds/locate";
 import { DEFAULT_SETTINGS, InfraLedgerSettingTab, type InfraLedgerSettings } from "./settings";
 import { CredsBlockView } from "./ui/block-view";
 import { ChangePasswordModal } from "./ui/change-modal";
@@ -18,6 +19,7 @@ import { HistoryModal } from "./ui/history-modal";
 import { NewResourceModal } from "./ui/new-resource";
 import { SearchModal } from "./ui/search-modal";
 import { ClipboardGuard } from "./util/clipboard";
+import { migrateSpaces, type Space } from "./spaces";
 import type { Credential } from "./model";
 
 const RIBBON_ICON_ID = "infra-ledger";
@@ -37,12 +39,14 @@ export default class InfraLedgerPlugin extends Plugin {
 
   override async onload(): Promise<void> {
     await this.loadSettings();
-    this.index = new LedgerIndex(this.app);
+    this.index = new LedgerIndex(this.app, () => this.settings.spaces);
     this.clipboard = new ClipboardGuard(navigator.clipboard);
 
     this.addSettingTab(new InfraLedgerSettingTab(this.app, this));
     this.registerMarkdownCodeBlockProcessor("creds", (source, el, ctx) => {
-      ctx.addChild(new CredsBlockView(el, this, source, ctx.sourcePath));
+      const info = ctx.getSectionInfo(el);
+      const first = !info || firstCredsBlockLine(info.text) === info.lineStart;
+      ctx.addChild(new CredsBlockView(el, this, source, ctx.sourcePath, first));
     });
 
     addIcon(RIBBON_ICON_ID, RIBBON_ICON);
@@ -94,16 +98,24 @@ export default class InfraLedgerPlugin extends Plugin {
   }
 
   async loadSettings(): Promise<void> {
-    const data = ((await this.loadData()) ?? {}) as Partial<InfraLedgerSettings>;
+    const data = ((await this.loadData()) ?? {}) as Partial<InfraLedgerSettings> & { resourceFolder?: string };
+    const { resourceFolder: _old, ...rest } = data;
     this.settings = {
       ...structuredClone(DEFAULT_SETTINGS),
-      ...data,
+      ...rest,
+      spaces: migrateSpaces(data),
       generator: { ...DEFAULT_SETTINGS.generator, ...(data.generator ?? {}) },
     };
   }
 
   async saveSettings(): Promise<void> {
     await this.saveData(this.settings);
+    this.index?.reindexSpaces();
+  }
+
+  /** Spaces with a name, in settings order. */
+  namedSpaces(): Space[] {
+    return this.settings.spaces.filter((s) => s.name !== "");
   }
 
   async copySecret(secret: string): Promise<void> {

@@ -27,7 +27,9 @@ Everything is plain Markdown. Remove the plugin and your notes still read fine.
 - **Several credentials per resource.** `root`, `deploy`, `postgres app`, `panel admin`, each with its own user, secret and kind.
 - **Password history.** "Change password" moves the old value into history with today's date and an optional reason. Nothing is overwritten.
 - **Shared credentials.** Define a credential once and reference it from other resources with `ref`.
-- **Quick search.** Type `prod pg deploy` and copy the secret, the username or `ssh -p 22 deploy@10.0.0.4`.
+- **Quick search.** Type `prod pg deploy` and copy the secret, the username or `ssh -p 22 deploy@10.0.0.4`. Every ip, host, port and label is searchable.
+- **Spaces.** Keep personal and work resources in separate folders. New resources go where you pick, `@work` in search shows one space only.
+- **Several addresses and ports.** Public, private and Tailscale ips on one server; pick which one the SSH command uses.
 - **Clipboard that cleans up.** Copied secrets are cleared after 30 seconds (configurable).
 - **Desktop and mobile.** No Node APIs, works on iOS and Android.
 
@@ -38,10 +40,15 @@ A resource is a note with a `type` in its properties. Credentials live in a `cre
 ````markdown
 ---
 type: server          # server | database | cloud | service | other
-ip: 192.168.1.10
+ip:                   # one value or a list, each with an optional label
+  - 192.168.1.10 lan
+  - 100.64.0.7 tailscale
 provider: proxmox
 env: home
 ssh_port: 22
+ports:
+  - 8006 proxmox
+  - 5432 postgres
 tags: [homelab]
 ---
 
@@ -70,7 +77,7 @@ Anything you like goes here: setup notes, services, incidents.
 ```
 ````
 
-In reading view the block renders as a table with masked secrets and buttons to reveal, copy, change and view history.
+In reading view the block renders as a table with masked secrets and buttons to reveal, copy, change and view history. The note's addresses and ports show above it as chips you can click to copy.
 
 Rules worth knowing:
 
@@ -97,7 +104,7 @@ In search:
 | <kbd>Cmd/Ctrl</kbd> <kbd>Enter</kbd> | Copy SSH command |
 | <kbd>Alt</kbd> <kbd>Enter</kbd> | Open note |
 
-On mobile, tap a result to get the same actions as a menu.
+When a server has more than one address, <kbd>Cmd/Ctrl</kbd> <kbd>Enter</kbd> asks which one to use. Start the query with `@` and a space name (`@work prod`) to search one space. On mobile, tap a result to get the same actions as a menu.
 
 ## Security
 

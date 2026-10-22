@@ -16,6 +16,7 @@ export class CredsBlockView extends MarkdownRenderChild {
     private readonly plugin: InfraLedgerPlugin,
     private readonly source: string,
     private readonly sourcePath: string,
+    private readonly showResource: boolean,
   ) {
     super(containerEl);
   }
@@ -49,6 +50,7 @@ export class CredsBlockView extends MarkdownRenderChild {
     }
 
     const snapshot = this.plugin.index.snapshot;
+    if (this.showResource) this.renderResource(el, snapshot);
     if (parsed.entries.length === 0) {
       el.createDiv({ cls: "infra-ledger-empty", text: "No credentials in this block yet." });
     } else {
@@ -68,6 +70,31 @@ export class CredsBlockView extends MarkdownRenderChild {
       for (const w of warnings) list.createEl("li", { text: w.line ? `Line ${w.line}: ${w.message}` : w.message });
     }
     this.plugin.renderBlockFooter(el, this.sourcePath);
+  }
+
+  /** Addresses and ports of the note as copyable chips, above the first creds block. */
+  private renderResource(el: HTMLElement, snapshot: LedgerSnapshot): void {
+    const r = snapshot.resources.find((res) => res.path === this.sourcePath);
+    if (!r) return;
+    const chips = [
+      ...[...r.ips, ...r.hosts].map((a) => ({ text: a.label ? `${a.value} ${a.label}` : a.value, copy: a.value })),
+      ...r.ports.map((p) => ({ text: p.label ? `${p.port} ${p.label}` : `${p.port}`, copy: String(p.port) })),
+    ];
+    if (chips.length === 0 && r.warnings.length === 0) return;
+    const row = el.createDiv({ cls: "infra-ledger-resource" });
+    for (const chip of chips) {
+      const b = row.createEl("button", { cls: "infra-ledger-chip infra-ledger-mono", text: chip.text });
+      setTooltip(b, `Copy ${chip.copy}`);
+      b.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        void this.plugin.copyText(chip.copy, `Copied ${chip.copy}.`);
+      });
+    }
+    if (r.warnings.length > 0) {
+      const list = el.createEl("ul", { cls: "infra-ledger-warnings" });
+      for (const w of r.warnings) list.createEl("li", { text: w });
+    }
   }
 
   private renderCredential(body: HTMLElement, cred: Credential, snapshot: LedgerSnapshot): void {
