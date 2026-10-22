@@ -475,3 +475,35 @@ Bu bolum eski "v2 Taslak / Sifreleme" bolumunun yerine gecer.
 
 - Birim: kurulum -> parolayla ve kurtarma anahtariyla acma, yanlis parola/anahtar reddi, parola degistirme sonrasi eski parolanin reddi, yeni kurtarma anahtari sonrasi eskisinin reddi, sifrele/coz gidis-donus (Turkce karakter, bos olmayan uzun deger), kurcalanmis degerin reddi, `enc:v1` bicim ayristirma, base32 gidis-donus ve bosluk/tire toleransi, blok donusumu (sadece secret ve history secret degisir, digerleri ve blok disi byte byte ayni, ref satirina dokunulmaz, karisik acik/sifreli), decrypt script'inin plugin formatini cozmesi.
 - Manuel: kurulum, otomatik kilit, kilitliyken goster/kopyala, encrypt all / decrypt all raporu, kurtarma akisi, turn off reddi, mobilde kilit acma.
+
+## 0.7.0: Anahtarla giris ve credential'dan SSH komutu
+
+### auth ve key_path
+
+```yaml
+- id: homeserver-deploy
+  label: deploy
+  user: deploy
+  kind: ssh
+  auth: key                          # password | key; yoksa password
+  key_path: ~/.ssh/hetzner_ed25519   # anahtarin bilgisayardaki yeri
+  secret: "passphrase"               # istege bagli: anahtarin passphrase'i
+```
+
+- `auth` ve `key_path` temel alanlardir (ham metinden okunur). Bilinmeyen `auth` degeri `password` sayilir.
+- Anahtar dosyasinin icerigi nota yazilmaz; sadece yolu tutulur. `secret` key kullanan credential'da passphrase anlamina gelir ve sifreleme aciksa sifrelenir; `key_path` acik kalir.
+- Tablo: key kullanan satirda anahtar ikonu ve dosya adi; passphrase varsa maskeli olarak yaninda.
+- Add credential formu: "Password / SSH key" secimi; key secilince "Key file" ve "Passphrase" alanlari.
+
+### Copy SSH login
+
+- Notta en az bir adres varsa, `kind: ssh` ya da `auth: key` olan credential satirinda "Copy SSH login" butonu.
+- Komut: `ssh -p <ssh_port> [-i <key_path>] <user>@<adres>`. Bosluk iceren yol cift tirnakla yazilir.
+- Tek adres: dogrudan kopyalanir. Birden fazla: secici; her satirda etiket, scope ve tam komut.
+- Sifreyle giris: komut `-i` olmadan kopyalanir; bildirim sifre icin kopyala butonunu hatirlatir.
+- Aramadaki Mod+Enter, mobil aksiyon menusu ve network tablosundaki SSH butonu da credential'in `key_path`'ini kullanir.
+
+### Test (0.7.0)
+
+- Birim: `auth`/`key_path` okuma (yoksa password, bilinmeyen deger), key credential ekleme (alan sirasi, passphrase opsiyonel), SSH komutunda `-i` ve tirnaklama, sshTargets'in anahtari tasimasi.
+- Manuel: key credential ekleme, tablo gorunumu, tek ve coklu adreste Copy SSH login, sifreli passphrase.
