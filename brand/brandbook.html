@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Infra Ledger Brandbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #15191E;
+  --paper: #F3F0E7;
+  --green: #2D6A4F;
+  --green-light: #5FB58A;
+  --red: #B8432F;
+  --red-light: #E07A5F;
+  --rule: #D9D3C3;
+  --muted: #5B6168;
+  --night: #101317;
+  --muted-dark: #9AA1A9;
+  --rule-dark: #2A2F36;
+
+  --bg: var(--paper);
+  --fg: var(--ink);
+  --fg-2: var(--muted);
+  --line: var(--rule);
+  --accent: var(--green);
+  --change: var(--red);
+  --card: #FBF9F4;
+
+  --sans: "IBM Plex Sans", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: var(--night);
+    --fg: var(--paper);
+    --fg-2: var(--muted-dark);
+    --line: var(--rule-dark);
+    --accent: var(--green-light);
+    --change: var(--red-light);
+    --card: #161A1F;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 400 16px/1.6 var(--sans);
+  /* ledger lines */
+  background-image: repeating-linear-gradient(to bottom, transparent 0 31px, color-mix(in srgb, var(--line) 45%, transparent) 31px 32px);
+}
+.page {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 0 24px 96px 72px;
+  position: relative;
+}
+/* margin rule */
+.page::before {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0; left: 44px;
+  width: 2px;
+  background: var(--change);
+  opacity: .85;
+}
+code, .mono { font-family: var(--mono); font-size: .92em; }
+
+/* cover */
+.cover { padding: 96px 0 72px; border-bottom: 1px solid var(--line); }
+.cover .entry { font: 500 13px/1 var(--mono); color: var(--fg-2); letter-spacing: .04em; }
+.cover h1 { font-size: clamp(44px, 8vw, 88px); line-height: 1; font-weight: 600; letter-spacing: -.03em; margin: 28px 0 0; display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+.cover h1 svg { width: clamp(64px, 10vw, 104px); height: auto; flex: none; }
+.cover h1 .light { font-weight: 400; }
+.cover .tagline { font-size: clamp(22px, 3vw, 30px); margin: 28px 0 0; max-width: 22ch; line-height: 1.25; }
+.cover .lede { color: var(--fg-2); max-width: 58ch; margin: 20px 0 0; }
+
+/* sections */
+section { padding: 72px 0 8px; }
+.sec-head { display: grid; grid-template-columns: 64px 1fr; gap: 0 16px; align-items: baseline; margin-bottom: 28px; }
+.sec-head .no { font: 500 13px var(--mono); color: var(--change); margin-left: -28px; }
+.sec-head h2 { font-size: 30px; line-height: 1.15; margin: 0; font-weight: 600; letter-spacing: -.01em; }
+.sec-head p { grid-column: 2; margin: 10px 0 0; color: var(--fg-2); max-width: 62ch; }
+h3 { font-size: 15px; font-weight: 600; margin: 32px 0 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--fg-2); }
+p { max-width: 66ch; }
+
+.grid { display: grid; gap: 16px; }
+.g2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.g3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 2px; padding: 20px; }
+
+/* idea */
+.idea { display: grid; grid-template-columns: minmax(200px, 300px) 1fr; gap: 32px; align-items: center; }
+.idea svg { width: 100%; height: auto; }
+.idea ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 18px; }
+.idea li { padding-left: 16px; border-left: 2px solid var(--line); }
+.idea li b { display: block; }
+@media (max-width: 640px) { .idea { grid-template-columns: 1fr; } }
+
+/* logo */
+.logo-tile { display: grid; place-items: center; min-height: 168px; border-radius: 2px; border: 1px solid var(--line); padding: 24px; }
+.logo-tile.light { background: #F3F0E7; }
+.logo-tile.dark { background: #101317; border-color: #2A2F36; }
+.logo-tile svg { max-width: 100%; height: auto; }
+.caption { font: 400 13px var(--mono); color: var(--fg-2); margin-top: 8px; }
+.sizes { display: flex; align-items: flex-end; gap: 28px; flex-wrap: wrap; }
+.sizes figure { margin: 0; text-align: center; }
+.dont { position: relative; }
+.dont::after { content: "Don't"; position: absolute; top: 8px; left: 8px; font: 500 11px var(--mono); color: #B8432F; text-transform: uppercase; letter-spacing: .06em; }
+
+/* color */
+.swatch { border: 1px solid var(--line); border-radius: 2px; overflow: hidden; background: var(--card); }
+.swatch .chip { height: 96px; display: flex; align-items: flex-end; padding: 10px 12px; font: 500 13px var(--mono); }
+.swatch .meta { padding: 12px; font-size: 14px; }
+.swatch .meta b { display: block; }
+.swatch .meta span { color: var(--fg-2); font-size: 13px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--fg-2); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+.table-wrap { overflow-x: auto; }
+
+/* typography */
+.type-sample { padding: 24px 0; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 180px 1fr; gap: 16px; align-items: baseline; }
+.type-sample .label { font: 400 13px var(--mono); color: var(--fg-2); }
+@media (max-width: 640px) { .type-sample { grid-template-columns: 1fr; } }
+
+/* obsidian mock */
+.mock { border-radius: 8px; overflow: hidden; border: 1px solid var(--line); font-size: 14px; }
+.mock.l { background: #FFFFFF; color: #222; --m-line: #E3E3E3; --m-muted: #707070; --m-hover: #F2F3F5; --m-code: #F5F5F5; }
+.mock.d { background: #1E1E1E; color: #DADADA; --m-line: #363636; --m-muted: #999; --m-hover: #2A2A2A; --m-code: #262626; border-color: #333; }
+.mock .bar { display: flex; gap: 6px; padding: 10px 14px; border-bottom: 1px solid var(--m-line); align-items: center; }
+.mock .bar i { width: 10px; height: 10px; border-radius: 50%; background: var(--m-line); display: block; }
+.mock .bar span { margin-left: 10px; font-size: 12px; color: var(--m-muted); }
+.mock .body { padding: 18px 20px 22px; }
+.mock .mock-title { margin: 0 0 4px; font-size: 20px; font-weight: 600; }
+.mock .props { font: 400 12px var(--mono); color: var(--m-muted); margin-bottom: 14px; }
+.creds { border: 1px solid var(--m-line); border-radius: 6px; overflow: hidden; }
+.creds .row { display: grid; grid-template-columns: 1.1fr 1fr .6fr 1.2fr auto; gap: 10px; padding: 9px 12px; align-items: center; border-top: 1px solid var(--m-line); }
+.creds .row:first-child { border-top: 0; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--m-muted); }
+.creds .mono { font-size: 12.5px; }
+.creds .kind { font: 500 11px var(--mono); color: var(--m-muted); }
+.creds .acts { display: flex; gap: 4px; }
+.creds .acts b { width: 24px; height: 24px; border-radius: 4px; display: grid; place-items: center; color: var(--m-muted); font-weight: 400; }
+.creds .acts b:hover { background: var(--m-hover); }
+.creds .acts svg { width: 14px; height: 14px; }
+.creds .changed { border-left: 2px solid #B8432F; }
+.mock.d .creds .changed { border-left-color: #E07A5F; }
+.creds .meta { font-size: 11px; color: var(--m-muted); font-family: var(--mono); }
+@media (max-width: 720px) {
+  .creds .row { grid-template-columns: 1fr 1fr auto; }
+  .creds .row > :nth-child(3), .creds .row > :nth-child(4) { display: none; }
+}
+.notice { display: inline-block; margin-top: 14px; padding: 8px 12px; border-radius: 6px; background: var(--m-code); font-size: 13px; border: 1px solid var(--m-line); }
+
+/* voice */
+.dodont { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.dodont .card h4 { margin: 0 0 12px; font-size: 13px; font-family: var(--mono); text-transform: uppercase; letter-spacing: .06em; }
+.dodont .yes h4 { color: var(--accent); }
+.dodont .no h4 { color: var(--change); }
+.dodont ul { margin: 0; padding-left: 18px; }
+.dodont li { margin: 6px 0; }
+.dodont .no li { text-decoration: line-through; text-decoration-color: var(--change); text-decoration-thickness: 1.5px; }
+@media (max-width: 640px) { .dodont { grid-template-columns: 1fr; } }
+.principles { counter-reset: p; display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; }
+.principles li { counter-increment: p; display: grid; grid-template-columns: 40px 1fr; }
+.principles li::before { content: counter(p, decimal-leading-zero); font: 500 13px var(--mono); color: var(--change); padding-top: 3px; }
+.principles li b { display: block; }
+.principles li span { color: var(--fg-2); }
+blockquote { margin: 0; padding: 18px 20px; border-left: 2px solid var(--accent); background: var(--card); max-width: 70ch; }
+blockquote p { margin: 0; }
+blockquote + blockquote { margin-top: 12px; }
+
+footer { margin-top: 96px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--fg-2); font: 400 13px var(--mono); display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+
+@media (max-width: 560px) {
+  .page { padding-left: 44px; padding-right: 16px; }
+  .page::before { left: 26px; }
+  .sec-head { grid-template-columns: 1fr; }
+  .sec-head .no { margin-left: 0; }
+  .sec-head p { grid-column: 1; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="cover">
+    <div class="entry">BRANDBOOK · v1 · 2026-10-22</div>
+    <h1>
+      <svg viewBox="0 0 64 64" aria-hidden="true"><line x1="13" y1="11" x2="13" y2="53" stroke="var(--change)" stroke-width="2.5" stroke-linecap="round"/><rect x="20" y="13" width="32" height="10" rx="2" fill="var(--fg)"/><circle cx="46" cy="18" r="2" fill="var(--accent)"/><rect x="20" y="27" width="32" height="10" rx="2" fill="var(--fg)" fill-opacity=".5"/><rect x="20" y="41" width="32" height="10" rx="2" fill="var(--fg)" fill-opacity=".22"/></svg>
+      <span><span class="light">Infra</span> Ledger</span>
+    </h1>
+    <p class="tagline">Credentials with a paper trail.</p>
+    <p class="lede">Visual identity and voice for the Obsidian plugin that keeps server, database and cloud details in your notes, and records every password change with its date and reason.</p>
+  </header>
+
+  <section>
+    <div class="sec-head"><span class="no">01</span><h2>Idea</h2>
+      <p>A ledger never erases an entry. The line is struck through and the new one goes below it. Infra Ledger keeps passwords the same way: the old value doesn't disappear, it moves into history with its date.</p></div>
+    <div class="idea">
+      <svg viewBox="0 0 300 220" aria-label="Parts of the logo">
+        <line x1="40" y1="20" x2="40" y2="200" stroke="var(--change)" stroke-width="5" stroke-linecap="round"/>
+        <rect x="70" y="30" width="150" height="44" rx="6" fill="var(--fg)"/>
+        <circle cx="194" cy="52" r="8" fill="var(--accent)"/>
+        <rect x="70" y="90" width="150" height="44" rx="6" fill="var(--fg)" fill-opacity=".5"/>
+        <rect x="70" y="150" width="150" height="44" rx="6" fill="var(--fg)" fill-opacity=".22"/>
+        <g font-family="IBM Plex Mono, monospace" font-size="12" fill="var(--fg-2)">
+          <text x="232" y="56">current</text>
+          <text x="232" y="116">history</text>
+          <text x="232" y="176">history</text>
+          <text x="22" y="214" fill="var(--change)">margin</text>
+        </g>
+      </svg>
+      <ol>
+        <li><b>Bars: rack units and ledger lines</b>The top bar is full color, the current entry. The bars below fade into history. The opacity order (100 / 50 / 22) never changes.</li>
+        <li><b>Red vertical line: the ledger margin</b>It separates the entry from the note. In the UI the same line means "this password changed".</li>
+        <li><b>Green dot: the server status LED</b>This entry is current. It is the only bright spot in the logo.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="no">02</span><h2>Logo</h2>
+      <p>The full logo goes in the README and slides, the mark in avatars and social previews, the single-color icon inside Obsidian.</p></div>
+    <div class="grid g2">
+      <div><div class="logo-tile light"><img src="logo/logo.svg" alt="Infra Ledger logo, light background" width="300" height="64"></div><div class="caption">logo/logo.svg</div></div>
+      <div><div class="logo-tile dark"><img src="logo/logo-dark.svg" alt="Infra Ledger logo, dark background" width="300" height="64"></div><div class="caption">logo/logo-dark.svg</div></div>
+    </div>
+    <h3>Mark and icons</h3>
+    <div class="grid g3">
+      <div><div class="logo-tile light"><img src="logo/app-icon.svg" alt="App icon" width="112" height="112"></div><div class="caption">logo/app-icon.svg</div></div>
+      <div><div class="logo-tile dark"><img src="logo/mark-dark.svg" alt="Mark, dark background" width="96" height="96"></div><div class="caption">logo/mark-dark.svg</div></div>
+      <div><div class="logo-tile light">
+        <div class="sizes" style="color:#15191E">
+          <figure><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3v18"/><rect x="8" y="4" width="12" height="4" rx="1"/><rect x="8" y="10" width="12" height="4" rx="1" stroke-opacity=".6"/><rect x="8" y="16" width="12" height="4" rx="1" stroke-opacity=".35"/></svg><div class="caption">48</div></figure>
+          <figure><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3v18"/><rect x="8" y="4" width="12" height="4" rx="1"/><rect x="8" y="10" width="12" height="4" rx="1" stroke-opacity=".6"/><rect x="8" y="16" width="12" height="4" rx="1" stroke-opacity=".35"/></svg><div class="caption">24</div></figure>
+          <figure><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3v18"/><rect x="8" y="4" width="12" height="4" rx="1"/><rect x="8" y="10" width="12" height="4" rx="1" stroke-opacity=".6"/><rect x="8" y="16" width="12" height="4" rx="1" stroke-opacity=".35"/></svg><div class="caption">16</div></figure>
+        </div></div><div class="caption">logo/ribbon-icon.svg · currentColor</div></div>
+    </div>
+    <h3>Rules</h3>
+    <div class="grid g3">
+      <div class="card">Clear space of at least one bar height. Below 32px, use the ribbon icon instead of the full-color mark.</div>
+      <div class="card">"Infra" regular, "Ledger" semibold, always two words. In code: <code>infra-ledger</code>.</div>
+      <div class="card">No shadows, gradients or frames. Never flip the bar order: current is always on top.</div>
+    </div>
+    <h3>Don't</h3>
+    <div class="grid g3">
+      <div><div class="logo-tile light dont"><svg width="80" height="80" viewBox="0 0 64 64"><line x1="13" y1="11" x2="13" y2="53" stroke="#B8432F" stroke-width="2.5" stroke-linecap="round"/><rect x="20" y="13" width="32" height="10" rx="2" fill="#15191E" fill-opacity=".22"/><rect x="20" y="27" width="32" height="10" rx="2" fill="#15191E" fill-opacity=".5"/><rect x="20" y="41" width="32" height="10" rx="2" fill="#15191E"/><circle cx="46" cy="46" r="2" fill="#5FB58A"/></svg></div><div class="caption">Flip the order</div></div>
+      <div><div class="logo-tile light dont"><svg width="80" height="80" viewBox="0 0 64 64"><defs><linearGradient id="gx" x1="0" x2="1"><stop offset="0" stop-color="#7c3aed"/><stop offset="1" stop-color="#06b6d4"/></linearGradient></defs><line x1="13" y1="11" x2="13" y2="53" stroke="url(#gx)" stroke-width="2.5" stroke-linecap="round"/><rect x="20" y="13" width="32" height="10" rx="2" fill="url(#gx)"/><rect x="20" y="27" width="32" height="10" rx="2" fill="url(#gx)" fill-opacity=".5"/><rect x="20" y="41" width="32" height="10" rx="2" fill="url(#gx)" fill-opacity=".22"/></svg></div><div class="caption">Add gradients or off-palette colors</div></div>
+      <div><div class="logo-tile light dont"><span style="font:600 26px var(--sans);color:#15191E;letter-spacing:-.02em">InfraLedger</span></div><div class="caption">Join the two words</div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="no">03</span><h2>Color</h2>
+      <p>Ledger paper, ink, a green ruling and a red margin. Red is not the error color, it is the "changed" color. Errors use Obsidian's own error color.</p></div>
+    <div class="grid g3">
+      <div class="swatch"><div class="chip" style="background:#15191E;color:#F3F0E7">#15191E</div><div class="meta"><b>Ink</b><span>Text, logo bars</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#F3F0E7;color:#15191E;border-bottom:1px solid #D9D3C3">#F3F0E7</div><div class="meta"><b>Paper</b><span>Background, app icon</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#2D6A4F;color:#F3F0E7">#2D6A4F</div><div class="meta"><b>Ledger green</b><span>Primary, links, "current"</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#B8432F;color:#F3F0E7">#B8432F</div><div class="meta"><b>Margin red</b><span>Margin, change, history</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#D9D3C3;color:#15191E">#D9D3C3</div><div class="meta"><b>Rule</b><span>Dividers and table lines</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#5B6168;color:#F3F0E7">#5B6168</div><div class="meta"><b>Muted</b><span>Secondary text, dates</span></div></div>
+    </div>
+    <h3>Dark theme counterparts</h3>
+    <div class="grid g3">
+      <div class="swatch"><div class="chip" style="background:#101317;color:#F3F0E7">#101317</div><div class="meta"><b>Night</b><span>Dark background</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#5FB58A;color:#15191E">#5FB58A</div><div class="meta"><b>Ledger green light</b><span>Primary on dark</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#E07A5F;color:#15191E">#E07A5F</div><div class="meta"><b>Margin red light</b><span>Margin on dark</span></div></div>
+    </div>
+    <h3>Contrast (WCAG)</h3>
+    <div class="table-wrap"><table>
+      <tr><th>Pair</th><th>Ratio</th><th>Level</th></tr>
+      <tr><td>Ink / Paper</td><td class="mono">15.49</td><td>AAA</td></tr>
+      <tr><td>Ledger green / Paper</td><td class="mono">5.61</td><td>AA</td></tr>
+      <tr><td>Margin red / Paper</td><td class="mono">4.75</td><td>AA</td></tr>
+      <tr><td>Muted / Paper</td><td class="mono">5.49</td><td>AA</td></tr>
+      <tr><td>Ledger green light / Night</td><td class="mono">7.51</td><td>AAA</td></tr>
+      <tr><td>Margin red light / Night</td><td class="mono">6.31</td><td>AA</td></tr>
+    </table></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="no">04</span><h2>Typography</h2>
+      <p>One family, two styles. The rule is simple: anything you can copy is set in mono.</p></div>
+    <div class="type-sample"><div class="label">Plex Sans 600 · heading</div><div style="font-size:36px;font-weight:600;letter-spacing:-.02em;line-height:1.1">HomeServer</div></div>
+    <div class="type-sample"><div class="label">Plex Sans 400 · body</div><div>The root password changed on 10 March. The old value is in history, with the reason.</div></div>
+    <div class="type-sample"><div class="label">Plex Mono 400 · data</div><div class="mono" style="font-size:15px">ssh -p 22 deploy@10.0.0.4 · homeserver-root · 2026-03-10</div></div>
+    <p style="color:var(--fg-2);margin-top:20px">The plugin loads no custom fonts. The UI uses Obsidian's font, data fields use the <code>--font-monospace</code> variable.</p>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="no">05</span><h2>Inside Obsidian</h2>
+      <p>The plugin follows the user's theme. The brand shows up in two places only: the ribbon icon and the thin margin line next to a changed password.</p></div>
+    <div class="grid g2">
+      <div class="mock l">
+        <div class="bar"><i></i><i></i><i></i><span>Infra / HomeServer.md</span></div>
+        <div class="body">
+          <div class="mock-title">HomeServer</div>
+          <div class="props">server · proxmox · home · 192.168.1.10</div>
+          <div class="creds">
+            <div class="row"><span>Label</span><span>User</span><span>Kind</span><span>Secret</span><span></span></div>
+            <div class="row changed"><span>root<div class="meta">changed 2026-03-10</div></span><span class="mono">root</span><span class="kind">ssh</span><span class="mono">••••••••••</span><span class="acts"><b title="Copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></b><b title="History"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg></b></span></div>
+            <div class="row"><span>postgres app</span><span class="mono">appuser</span><span class="kind">db</span><span class="mono">••••••••••</span><span class="acts"><b title="Copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></b><b title="History"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg></b></span></div>
+          </div>
+          <div class="notice">Password copied. Clipboard clears in 30 s.</div>
+        </div>
+      </div>
+      <div class="mock d">
+        <div class="bar"><i></i><i></i><i></i><span>Infra / HomeServer.md</span></div>
+        <div class="body">
+          <div class="mock-title">HomeServer</div>
+          <div class="props">server · proxmox · home · 192.168.1.10</div>
+          <div class="creds">
+            <div class="row"><span>Label</span><span>User</span><span>Kind</span><span>Secret</span><span></span></div>
+            <div class="row changed"><span>root<div class="meta">changed 2026-03-10</div></span><span class="mono">root</span><span class="kind">ssh</span><span class="mono">••••••••••</span><span class="acts"><b title="Copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></b><b title="History"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg></b></span></div>
+            <div class="row"><span>postgres app</span><span class="mono">appuser</span><span class="kind">db</span><span class="mono">••••••••••</span><span class="acts"><b title="Copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></b><b title="History"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg></b></span></div>
+          </div>
+          <div class="notice">Password changed. Previous value moved to history.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="no">06</span><h2>Voice and tone</h2>
+      <p>Like a note from one person who runs servers to another. Short, factual, says what happened.</p></div>
+    <ol class="principles">
+      <li><div><b>Say what happened, not how it feels.</b><span>"Password changed. Previous value moved to history." No exclamation marks, no "Success".</span></div></li>
+      <li><div><b>Use numbers and names.</b><span>"Clipboard clears in 30 s." "Duplicate id <code>forge-key</code> in <code>HomeServer.md</code> and <code>Forge.md</code>."</span></div></li>
+      <li><div><b>Don't oversell security.</b><span>Say plainly what the plugin doesn't protect. If encryption is off, show it.</span></div></li>
+      <li><div><b>Error messages state the next step.</b><span>"Can't save: YAML error on line 4. Fix it in source mode, then try again."</span></div></li>
+      <li><div><b>Don't blame the user.</b><span>"This block has a YAML error...", not "You entered an invalid...".</span></div></li>
+    </ol>
+    <h3>Words</h3>
+    <div class="dodont">
+      <div class="card yes"><h4>Use</h4><ul>
+        <li>credentials, resource, history, rotate</li>
+        <li>plain Markdown, readable without the plugin</li>
+        <li>optional encryption</li>
+        <li>copy, search, change password</li>
+      </ul></div>
+      <div class="card no"><h4>Avoid</h4><ul>
+        <li>military-grade, bank-level, unhackable</li>
+        <li>100% secure, zero risk</li>
+        <li>powerful, seamless, effortless, robust</li>
+        <li>leverage, streamline, supercharge</li>
+        <li>"password manager" (to describe itself)</li>
+      </ul></div>
+    </div>
+    <h3>Honest security statement</h3>
+    <blockquote><p>Infra Ledger stores everything in your vault as plain Markdown. If your vault syncs to iCloud, Dropbox or Git, your credentials go with it. Optional encryption protects the <code>secret</code> fields with a master password. Hostnames, users and notes stay readable so you can search them.</p></blockquote>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="no">07</span><h2>Copy library</h2>
+      <p>Ready-to-use text for GitHub, the plugin browser and the UI. The full list is in <code>brand.md</code>.</p></div>
+    <div class="table-wrap"><table>
+      <tr><th style="width:24%">Where</th><th>Text</th></tr>
+      <tr><td>Tagline</td><td>Credentials with a paper trail.</td></tr>
+      <tr><td>GitHub description</td><td>Keep server, database and cloud credentials in your Obsidian notes, with per-credential password history, fast search and copy, and optional encryption.</td></tr>
+      <tr><td>GitHub topics</td><td class="mono">obsidian-plugin, obsidian, sysadmin, homelab, devops, credentials, password-history, inventory, markdown</td></tr>
+      <tr><td>manifest.json</td><td>Track servers, databases and cloud accounts in your notes. Keep a history of every password change, search and copy credentials fast, optionally encrypt secrets.</td></tr>
+      <tr><td>README intro</td><td>Infra Ledger keeps your servers, databases and cloud accounts as notes in your vault. Each note holds a <code>creds</code> block with the users and passwords for that resource. When you rotate a password, the old one moves to a dated history with the reason you gave. Search across everything from the command palette and copy a password, a username or a ready SSH command with one key.</td></tr>
+    </table></div>
+    <h3>UI messages</h3>
+    <div class="table-wrap"><table>
+      <tr><th style="width:24%">Situation</th><th>Text</th></tr>
+      <tr><td>Password copied</td><td>Password copied. Clipboard clears in 30 s.</td></tr>
+      <tr><td>Password changed</td><td>Password changed. Previous value moved to history.</td></tr>
+      <tr><td>YAML error</td><td>Can't read this block: YAML error on line 4. Fix it in source mode.</td></tr>
+      <tr><td>Duplicate id</td><td>Duplicate id <code>forge-key</code> in <code>HomeServer.md</code> and <code>Forge.md</code>. Rename one before editing.</td></tr>
+      <tr><td>Empty search</td><td>No match for "prod pg". Try a host, tag or username.</td></tr>
+      <tr><td>No resources</td><td>No resources yet. Run "Infra Ledger: New resource" to add your first server.</td></tr>
+    </table></div>
+  </section>
+
+  <footer><span>Infra Ledger · brandbook v1</span><span>brand.md · brand.yaml · logo/</span></footer>
+</div>
+</body>
+</html>

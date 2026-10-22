@@ -1,0 +1,47 @@
+name: Infra Ledger
+id: infra-ledger
+tagline:
+  en: "Credentials with a paper trail."
+
+colors:
+  ink: "#15191E"        # text, logo bars (light background)
+  paper: "#F3F0E7"      # background, app icon (text on dark)
+  ledger_green: "#2D6A4F"  # primary: links, buttons
+  ledger_green_light: "#5FB58A"  # primary on dark, LED dot
+  margin_red: "#B8432F"    # margin rule, "changed / history" marker
+  margin_red_light: "#E07A5F"  # margin red on dark
+  rule: "#D9D3C3"       # dividers and table lines
+  muted: "#5B6168"      # secondary text (light background)
+  night: "#101317"      # dark background
+  muted_dark: "#9AA1A9" # secondary text (dark background)
+
+contrast_wcag:
+  ink_on_paper: 15.49
+  ledger_green_on_paper: 5.61
+  margin_red_on_paper: 4.75
+  muted_on_paper: 5.49
+  ledger_green_light_on_night: 7.51
+  margin_red_light_on_night: 6.31
+
+fonts:
+  heading: "IBM Plex Sans"   # 600
+  body: "IBM Plex Sans"      # 400
+  data: "IBM Plex Mono"      # IPs, users, ids, commands
+  fallback_sans: "-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+  fallback_mono: "ui-monospace, 'SF Mono', Menlo, Consolas, monospace"
+
+radius: 2px        # same as the logo bars
+logo:
+  full: logo/logo.svg
+  full_dark: logo/logo-dark.svg
+  mark: logo/mark.svg
+  mark_dark: logo/mark-dark.svg
+  app_icon: logo/app-icon.svg
+  ribbon: logo/ribbon-icon.svg   # currentColor, matches Obsidian icon style
+
+github:
+  description: "Keep server, database and cloud credentials in your Obsidian notes, with per-credential password history, fast search and copy, and optional encryption."
+  topics: [obsidian-plugin, obsidian, sysadmin, homelab, devops, credentials, password-history, inventory, markdown]
+manifest:
+  description: "Track servers, databases and cloud accounts in your notes. Keep a history of every password change, search and copy credentials fast, optionally encrypt secrets."
+  author: "Ali Gündoğdu"
