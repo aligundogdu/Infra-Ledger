@@ -43,6 +43,40 @@ export function changeSecret(note: string, id: string, newSecret: string, today:
   });
 }
 
+/** Fields the edit form can change. The secret is left out on purpose: changeSecret keeps its history. */
+export interface CredentialPatch {
+  label?: string;
+  user?: string;
+  kind?: Kind;
+  note?: string;
+  auth?: "password" | "key";
+  keyPath?: string;
+}
+
+/** Applies a patch; an empty string removes the field. Unknown fields and the secret stay as they are. */
+export function updateCredential(note: string, id: string, patch: CredentialPatch): MutateResult {
+  if (patch.label !== undefined && patch.label.trim() === "") return { ok: false, reason: "A label is required." };
+  return editCredential(note, id, (item) => {
+    for (const key of ["label", "user", "kind", "note"] as const) {
+      const value = patch[key];
+      if (value === undefined) continue;
+      if (value === "") item.delete(key);
+      else item.set(key, value);
+    }
+    if (patch.auth === "password") {
+      item.delete("auth");
+      item.delete("key_path");
+    } else if (patch.auth === "key") {
+      item.set("auth", "key");
+    }
+    if (patch.keyPath !== undefined && patch.auth !== "password") {
+      if (patch.keyPath === "") item.delete("key_path");
+      else item.set("key_path", patch.keyPath);
+    }
+    return null;
+  });
+}
+
 export function deleteHistoryEntry(note: string, id: string, historyIndex: number): MutateResult {
   return editCredential(note, id, (item) => {
     const history: unknown = item.get("history", true);

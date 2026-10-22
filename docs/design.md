@@ -507,3 +507,9 @@ Bu bolum eski "v2 Taslak / Sifreleme" bolumunun yerine gecer.
 
 - Birim: `auth`/`key_path` okuma (yoksa password, bilinmeyen deger), key credential ekleme (alan sirasi, passphrase opsiyonel), SSH komutunda `-i` ve tirnaklama, sshTargets'in anahtari tasimasi.
 - Manuel: key credential ekleme, tablo gorunumu, tek ve coklu adreste Copy SSH login, sifreli passphrase.
+
+## 0.7.1: Duzenleme
+
+- Credential, adres ve port satirlarinda kalem butonu; ekleme formu mevcut degerlerle acilir.
+- Credential duzenleme: label, user, kind, note, auth ve key_path degisir; bos birakilan alan silinir. Secret bu formda degismez (Change password gecmisi korur). Id salt okunurdur (ref'ler ona baglidir). Bilinmeyen alanlar korunur.
+- Adres/port duzenleme: bilinen alanlar formdan yeniden yazilir, bos olanlar silinir, bilinmeyen alanlar kalir. Kayit sirasi ve degeri (ip/port) dogrulanir; uyusmazsa "blok degisti". Adres porta ya da port adrese donusturulemez.

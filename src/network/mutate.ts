@@ -63,6 +63,32 @@ export function addNetworkEntry(note: string, entry: NewAddress | NewPort): Muta
   return { ok: true, note: splice(note, block, render(doc)) };
 }
 
+/**
+ * Rewrites the known fields of one entry from a form; fields left empty are removed. Unknown fields
+ * stay. An address can't become a port or the other way round.
+ */
+export function updateNetworkEntry(note: string, ref: NetworkEntryRef, entry: NewAddress | NewPort): MutateResult {
+  const block = findBlocks(note, "network")[ref.block];
+  if (!block) return { ok: false, reason: STALE };
+  const parsed = parseNetworkBlock(block.content);
+  const current = parsed.entries.find((e) => e.index === ref.index);
+  const shown = current?.type === "address" ? current.value : current?.type === "port" ? String(current.port) : null;
+  if (!parsed.ok || !current || shown !== ref.value) return { ok: false, reason: STALE };
+  const isPort = "port" in entry;
+  if (isPort !== (current.type === "port")) return { ok: false, reason: STALE };
+
+  const doc = loadDoc(block.content);
+  if (typeof doc === "string" || !isSeq(doc.contents)) return { ok: false, reason: STALE };
+  const item = doc.contents.items[ref.index];
+  if (!(item instanceof YAMLMap)) return { ok: false, reason: STALE };
+  for (const key of isPort ? PORT_ORDER : ADDRESS_ORDER) {
+    const value = (entry as Record<string, unknown>)[key];
+    if (value === undefined || value === "") item.delete(key);
+    else item.set(key, key === "vlan" && /^\d+$/.test(String(value)) ? Number(value) : value);
+  }
+  return { ok: true, note: splice(note, block, render(doc)) };
+}
+
 export function deleteNetworkEntry(note: string, ref: NetworkEntryRef): MutateResult {
   const block = findBlocks(note, "network")[ref.block];
   if (!block) return { ok: false, reason: STALE };

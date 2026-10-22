@@ -100,6 +100,7 @@ export class NetworkBlockView extends MarkdownRenderChild {
       const cmd = sshCommand(a.value, r?.sshPort ?? 22, login.user, login.keyPath);
       void this.plugin.copyText(cmd, `SSH command copied: ${cmd}`);
     });
+    this.editButton(actions, () => this.plugin.openEditAddress(this.sourcePath, this.ref(a.index, a.value), a));
     this.deleteButton(actions, a.index, a.value, a.label ?? a.value);
   }
 
@@ -110,7 +111,17 @@ export class NetworkBlockView extends MarkdownRenderChild {
     this.details(row.createEl("td"), p.note, p.extra);
     const actions = row.createEl("td", { cls: "infra-ledger-actions" });
     this.button(actions, "copy", "Copy port", () => void this.plugin.copyText(String(p.port), `Copied ${p.port}.`));
+    this.editButton(actions, () => this.plugin.openEditPort(this.sourcePath, this.ref(p.index, String(p.port)), p));
     this.deleteButton(actions, p.index, String(p.port), p.service ? `${p.port} ${p.service}` : `port ${p.port}`);
+  }
+
+  private ref(index: number, value: string): { block: number; index: number; value: string } | null {
+    return this.ordinal === null ? null : { block: this.ordinal, index, value };
+  }
+
+  private editButton(cell: HTMLElement, open: () => void): void {
+    if (this.ordinal === null) return;
+    this.button(cell, "pencil", "Edit", open);
   }
 
   private details(cell: HTMLElement, note: string | undefined, extra: Record<string, string>): void {

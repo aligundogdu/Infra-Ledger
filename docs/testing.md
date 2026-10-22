@@ -104,6 +104,14 @@ Open `test-vault/` as a vault in Obsidian (Open another vault → Open folder as
 - [ ] Add credential → Sign in with: SSH key: Key file field appears, Password becomes Passphrase (optional), Kind switches to ssh. Saved entry has `auth: key` and `key_path`, no secret when the passphrase is empty.
 - [ ] Search `deploy`, Cmd/Ctrl+Enter: commands include `-i`. Enter on a key credential without passphrase explains it logs in with a key.
 
+## Editing (0.7.1)
+
+- [ ] Pencil on a credential row opens the form filled in; the password field is replaced by a hint, the id is read-only. Change label and note, save: only those lines change, the secret and unknown fields stay.
+- [ ] Switch a password credential to SSH key with a key file, save: `auth: key` and `key_path` appear; switch back: both disappear.
+- [ ] Pencil on an address: form filled in (with `/cidr`, scope "auto" when it was guessed). Change the label: only that row changes, `ethId` stays.
+- [ ] Pencil on a port: change the service, save.
+- [ ] Edit a row after changing the block by hand so the row moved: save is refused with "the block changed".
+
 ## Mobile
 
 - [ ] Block renders and fits a phone screen (kind column hidden).

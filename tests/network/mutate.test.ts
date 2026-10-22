@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addNetworkEntry, deleteNetworkEntry } from "../../src/network/mutate";
+import { addNetworkEntry, deleteNetworkEntry, updateNetworkEntry } from "../../src/network/mutate";
 import { parseNetworkBlock } from "../../src/network/parse";
 import { findBlocks } from "../../src/creds/locate";
 
@@ -87,5 +87,22 @@ describe("deleteNetworkEntry", () => {
   it("leaves an empty block after the last entry", () => {
     const note = "```network\n- ip: 10.0.0.1\n```\n";
     expect(ok(deleteNetworkEntry(note, { block: 0, index: 0, value: "10.0.0.1" }))).toBe("```network\n```\n");
+  });
+});
+
+describe("updateNetworkEntry", () => {
+  it("rewrites known fields of an address and keeps unknown ones", () => {
+    const after = ok(updateNetworkEntry(NOTE, { block: 0, index: 0, value: "10.0.0.4" }, { ip: "10.0.0.5/24", label: "lan" }));
+    const [a] = entries(after);
+    expect(a).toMatchObject({ type: "address", value: "10.0.0.5", cidr: "24", label: "lan", scopeGuessed: true, extra: { ethId: "7" } });
+    expect(after).toContain("# addresses");
+  });
+  it("rewrites a port", () => {
+    const after = ok(updateNetworkEntry(NOTE, { block: 0, index: 1, value: "443" }, { port: 8443, proto: "tcp", service: "https-alt" }));
+    expect(entries(after)[1]).toMatchObject({ port: 8443, service: "https-alt" });
+  });
+  it("refuses a moved entry or a type change", () => {
+    expect(updateNetworkEntry(NOTE, { block: 0, index: 0, value: "443" }, { ip: "1.1.1.1" }).ok).toBe(false);
+    expect(updateNetworkEntry(NOTE, { block: 0, index: 0, value: "10.0.0.4" }, { port: 22 }).ok).toBe(false);
   });
 });

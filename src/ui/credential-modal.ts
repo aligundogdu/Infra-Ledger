@@ -1,18 +1,19 @@
 import { App, DropdownComponent, Modal, Setting, TextComponent } from "obsidian";
-import { KINDS, type Kind } from "../model";
+import { KINDS, type Credential, type Kind } from "../model";
 import { generatePassword } from "../util/generator";
 import { slugify, suggestId } from "../util/ids";
 import type InfraLedgerPlugin from "../main";
 
-export class AddCredentialModal extends Modal {
-  private label = "";
-  private user = "";
+/** Adds a credential, or edits one when `existing` is given. Editing never touches the secret. */
+export class CredentialModal extends Modal {
+  private label: string;
+  private user: string;
   private secret = "";
-  private kind: Kind = "other";
-  private note = "";
-  private auth: "password" | "key" = "password";
-  private keyPath = "";
-  private id = "";
+  private kind: Kind;
+  private note: string;
+  private auth: "password" | "key";
+  private keyPath: string;
+  private id: string;
   private idEdited = false;
 
   constructor(
@@ -20,13 +21,22 @@ export class AddCredentialModal extends Modal {
     private readonly plugin: InfraLedgerPlugin,
     private readonly path: string,
     private readonly resourceName: string,
+    private readonly existing?: Credential,
   ) {
     super(app);
+    this.label = existing?.label ?? "";
+    this.user = existing?.user ?? "";
+    this.kind = existing?.kind ?? "other";
+    this.note = existing?.note ?? "";
+    this.auth = existing?.auth ?? "password";
+    this.keyPath = existing?.keyPath ?? "";
+    this.id = existing?.id ?? "";
   }
 
   override onOpen(): void {
     const { contentEl } = this;
-    this.titleEl.setText(`Add credential to ${this.resourceName}`);
+    const editing = !!this.existing;
+    this.titleEl.setText(editing ? `Edit ${this.existing!.label}` : `Add credential to ${this.resourceName}`);
     const taken = this.plugin.index.takenIds();
     let idInput!: TextComponent;
     let secretInput!: TextComponent;
@@ -37,9 +47,9 @@ export class AddCredentialModal extends Modal {
       });
 
     new Setting(contentEl).setName("Label").setDesc("Required. e.g. root, deploy, postgres app").addText((t) => {
-      t.onChange((v) => {
+      t.setValue(this.label).onChange((v) => {
         this.label = v.trim();
-        if (!this.idEdited) {
+        if (!editing && !this.idEdited) {
           this.id = this.label ? suggestId(this.resourceName, this.label, taken) : "";
           idInput.setValue(this.id);
         }
@@ -50,20 +60,20 @@ export class AddCredentialModal extends Modal {
 
     new Setting(contentEl).setName("User").addText((t) => {
       t.inputEl.addClass("infra-ledger-mono");
-      t.onChange((v) => (this.user = v.trim()));
+      t.setValue(this.user).onChange((v) => (this.user = v.trim()));
       submitOnEnter(t);
     });
 
     let keyRow!: Setting;
-    let secretRow!: Setting;
+    let secretRow: Setting | undefined;
     let kindDropdown: DropdownComponent | undefined;
     new Setting(contentEl).setName("Sign in with").addDropdown((d) => {
       d.addOption("password", "Password").addOption("key", "SSH key");
       d.setValue(this.auth).onChange((v) => {
         this.auth = v as "password" | "key";
         keyRow.settingEl.toggle(this.auth === "key");
-        secretRow.setName(this.auth === "key" ? "Passphrase" : "Password");
-        secretRow.setDesc(this.auth === "key" ? "Optional. Only if the key has one." : "");
+        secretRow?.setName(this.auth === "key" ? "Passphrase" : "Password");
+        secretRow?.setDesc(this.auth === "key" ? "Optional. Only if the key has one." : "");
         if (this.auth === "key" && this.kind === "other") {
           this.kind = "ssh";
           kindDropdown?.setValue("ssh");
@@ -77,34 +87,41 @@ export class AddCredentialModal extends Modal {
       .addText((t) => {
         t.setPlaceholder("~/.ssh/id_ed25519");
         t.inputEl.addClass("infra-ledger-mono");
-        t.onChange((v) => (this.keyPath = v.trim()));
+        t.setValue(this.keyPath).onChange((v) => (this.keyPath = v.trim()));
         submitOnEnter(t);
       });
-    keyRow.settingEl.toggle(false);
+    keyRow.settingEl.toggle(this.auth === "key");
 
-    secretRow = new Setting(contentEl)
-      .setName("Password")
-      .addText((t) => {
-        secretInput = t;
-        t.inputEl.type = "password";
-        t.inputEl.addClass("infra-ledger-mono");
-        t.onChange((v) => (this.secret = v));
-        submitOnEnter(t);
-      })
-      .addExtraButton((b) =>
-        b.setIcon("eye").setTooltip("Show").onClick(() => {
-          const hidden = secretInput.inputEl.type === "password";
-          secretInput.inputEl.type = hidden ? "text" : "password";
-          b.setIcon(hidden ? "eye-off" : "eye").setTooltip(hidden ? "Hide" : "Show");
-        }),
-      )
-      .addExtraButton((b) =>
-        b.setIcon("dices").setTooltip("Generate").onClick(() => {
-          this.secret = generatePassword(this.plugin.settings.generator);
-          secretInput.setValue(this.secret);
-          secretInput.inputEl.type = "text";
-        }),
-      );
+    if (editing) {
+      contentEl.createEl("p", {
+        cls: "infra-ledger-modal-hint",
+        text: `To change the ${this.auth === "key" ? "passphrase" : "password"}, use Change password; the old value then moves to history.`,
+      });
+    } else {
+      secretRow = new Setting(contentEl)
+        .setName(this.auth === "key" ? "Passphrase" : "Password")
+        .addText((t) => {
+          secretInput = t;
+          t.inputEl.type = "password";
+          t.inputEl.addClass("infra-ledger-mono");
+          t.onChange((v) => (this.secret = v));
+          submitOnEnter(t);
+        })
+        .addExtraButton((b) =>
+          b.setIcon("eye").setTooltip("Show").onClick(() => {
+            const hidden = secretInput.inputEl.type === "password";
+            secretInput.inputEl.type = hidden ? "text" : "password";
+            b.setIcon(hidden ? "eye-off" : "eye").setTooltip(hidden ? "Hide" : "Show");
+          }),
+        )
+        .addExtraButton((b) =>
+          b.setIcon("dices").setTooltip("Generate").onClick(() => {
+            this.secret = generatePassword(this.plugin.settings.generator);
+            secretInput.setValue(this.secret);
+            secretInput.inputEl.type = "text";
+          }),
+        );
+    }
 
     new Setting(contentEl).setName("Kind").addDropdown((d) => {
       kindDropdown = d;
@@ -113,16 +130,17 @@ export class AddCredentialModal extends Modal {
     });
 
     new Setting(contentEl).setName("Note").addText((t) => {
-      t.onChange((v) => (this.note = v.trim()));
+      t.setValue(this.note).onChange((v) => (this.note = v.trim()));
       submitOnEnter(t);
     });
 
     new Setting(contentEl)
       .setName("Id")
-      .setDesc("Unique across the vault. Other notes use it in a ref.")
+      .setDesc(editing ? "Refs in other notes point to this id, so it can't change here." : "Unique across the vault. Other notes use it in a ref.")
       .addText((t) => {
         idInput = t;
         t.inputEl.addClass("infra-ledger-mono");
+        t.setValue(this.id).setDisabled(editing);
         t.onChange((v) => {
           this.id = v.trim();
           this.idEdited = true;
@@ -132,7 +150,7 @@ export class AddCredentialModal extends Modal {
 
     new Setting(contentEl)
       .addButton((b) => b.setButtonText("Cancel").onClick(() => this.close()))
-      .addButton((b) => b.setButtonText("Add credential").setCta().onClick(() => void this.save()));
+      .addButton((b) => b.setButtonText(editing ? "Save" : "Add credential").setCta().onClick(() => void this.save()));
   }
 
   override onClose(): void {
@@ -142,6 +160,18 @@ export class AddCredentialModal extends Modal {
   private async save(): Promise<void> {
     if (!this.label) {
       this.plugin.notify("A label is required, e.g. root or deploy.");
+      return;
+    }
+    if (this.existing) {
+      const saved = await this.plugin.updateCredential(this.path, this.existing.id, {
+        label: this.label,
+        user: this.user,
+        kind: this.kind,
+        note: this.note,
+        auth: this.auth,
+        keyPath: this.auth === "key" ? this.keyPath : "",
+      });
+      if (saved) this.close();
       return;
     }
     if (!this.id || slugify(this.id) !== this.id) {

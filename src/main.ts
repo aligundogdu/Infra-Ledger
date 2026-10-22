@@ -4,14 +4,24 @@ import {
   changeSecret,
   deleteCredential,
   deleteHistoryEntry,
+  updateCredential,
+  type CredentialPatch,
   type MutateResult,
   type NewCredential,
 } from "./creds/mutate";
 import { LedgerIndex } from "./index/ledger-index";
 import { blockOrdinalAtLine, findBlocks, firstCredsBlockLine } from "./creds/locate";
-import { addNetworkEntry, deleteNetworkEntry, type NetworkEntryRef, type NewAddress, type NewPort } from "./network/mutate";
+import {
+  addNetworkEntry,
+  deleteNetworkEntry,
+  updateNetworkEntry,
+  type NetworkEntryRef,
+  type NewAddress,
+  type NewPort,
+} from "./network/mutate";
 import { NetworkBlockView } from "./ui/network-view";
-import { AddAddressModal, AddPortModal } from "./ui/network-modal";
+import { AddressModal, PortModal } from "./ui/network-modal";
+import type { NetAddress, NetPort } from "./network/parse";
 import { LedgerBlockView } from "./ui/ledger-view";
 import { RelatedBlockView } from "./ui/related-view";
 import { AddEventModal, openAssignFlow, openReturnFlow } from "./ui/ledger-modals";
@@ -20,7 +30,7 @@ import { DEFAULT_SETTINGS, InfraLedgerSettingTab, type InfraLedgerSettings } fro
 import { CredsBlockView } from "./ui/block-view";
 import { ChangePasswordModal } from "./ui/change-modal";
 import { ConfirmModal } from "./ui/confirm-modal";
-import { AddCredentialModal } from "./ui/credential-modal";
+import { CredentialModal } from "./ui/credential-modal";
 import { CredentialPicker } from "./ui/credential-picker";
 import { HistoryModal } from "./ui/history-modal";
 import { NewResourceModal } from "./ui/new-resource";
@@ -269,6 +279,10 @@ export default class InfraLedgerPlugin extends Plugin {
 
   /** Write actions shown next to the copy buttons of a credential row. */
   renderRowActions(cell: HTMLElement, cred: Credential, path: string, duplicate: boolean): void {
+    this.iconButton(cell, "pencil", "Edit", () => {
+      if (duplicate) this.notify(`Duplicate id "${cred.id}". Rename one before editing.`);
+      else new CredentialModal(this.app, this, path, path.split("/").pop()!.replace(/\.md$/, ""), cred).open();
+    });
     this.iconButton(cell, "key-round", "Change password", () => {
       if (duplicate) this.notify(`Duplicate id "${cred.id}". Rename one before editing.`);
       else this.openChange(cred, path);
@@ -303,7 +317,7 @@ export default class InfraLedgerPlugin extends Plugin {
 
   openAdd(path: string): void {
     const name = path.split("/").pop()!.replace(/\.md$/, "");
-    new AddCredentialModal(this.app, this, path, name).open();
+    new CredentialModal(this.app, this, path, name).open();
   }
 
   async addCredential(path: string, cred: NewCredential): Promise<boolean> {
@@ -407,11 +421,31 @@ export default class InfraLedgerPlugin extends Plugin {
   }
 
   openAddAddress(path: string): void {
-    new AddAddressModal(this.app, this, path).open();
+    new AddressModal(this.app, this, path).open();
   }
 
   openAddPort(path: string): void {
-    new AddPortModal(this.app, this, path).open();
+    new PortModal(this.app, this, path).open();
+  }
+
+  openEditAddress(path: string, ref: NetworkEntryRef | null, entry: NetAddress): void {
+    if (ref) new AddressModal(this.app, this, path, { ref, entry }).open();
+  }
+
+  openEditPort(path: string, ref: NetworkEntryRef | null, entry: NetPort): void {
+    if (ref) new PortModal(this.app, this, path, { ref, entry }).open();
+  }
+
+  async updateNetworkEntry(path: string, ref: NetworkEntryRef, entry: NewAddress | NewPort, name: string): Promise<boolean> {
+    const ok = await this.applyMutation(path, (note) => updateNetworkEntry(note, ref, entry));
+    if (ok) this.notify(`Saved ${name}.`);
+    return ok;
+  }
+
+  async updateCredential(path: string, id: string, patch: CredentialPatch): Promise<boolean> {
+    const ok = await this.applyMutation(path, (note) => updateCredential(note, id, patch));
+    if (ok) this.notify(`Saved ${patch.label ?? id}.`);
+    return ok;
   }
 
   async addNetworkEntry(path: string, entry: NewAddress | NewPort, name: string): Promise<boolean> {

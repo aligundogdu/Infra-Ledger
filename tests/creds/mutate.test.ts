@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addCredential, changeSecret, deleteCredential, deleteHistoryEntry } from "../../src/creds/mutate";
+import { addCredential, changeSecret, deleteCredential, deleteHistoryEntry, updateCredential } from "../../src/creds/mutate";
 import { findCredsBlocks } from "../../src/creds/locate";
 import { parseCredsBlock } from "../../src/creds/parse";
 import type { Credential } from "../../src/model";
@@ -201,5 +201,26 @@ describe("addCredential with a key", () => {
   });
   it("does not write auth for password credentials", () => {
     expect(ok(addCredential("```creds\n```\n", { id: "f", label: "f", auth: "password", secret: "x" }))).not.toContain("auth");
+  });
+});
+
+describe("updateCredential", () => {
+  it("sets, changes and removes fields without touching the secret or unknown fields", () => {
+    const after = ok(updateCredential(NOTE, "home-root", { label: "root login", user: "", note: "via console", kind: "panel" }));
+    const root = credsOf(after).find((c) => c.id === "home-root")!;
+    expect(root).toMatchObject({ label: "root login", note: "via console", kind: "panel", secret: "old-pass" });
+    expect(root.user).toBeUndefined();
+    expect(after).toContain("custom_field: keep me");
+    expectOutsideUnchanged(NOTE, after);
+  });
+  it("switches to key auth and back", () => {
+    const key = ok(updateCredential(NOTE, "home-root", { auth: "key", keyPath: "~/.ssh/k" }));
+    expect(credsOf(key).find((c) => c.id === "home-root")).toMatchObject({ auth: "key", keyPath: "~/.ssh/k" });
+    const back = ok(updateCredential(key, "home-root", { auth: "password" }));
+    expect(back).not.toMatch(/auth:|key_path:/);
+  });
+  it("refuses an empty label and a missing id", () => {
+    expect(updateCredential(NOTE, "home-root", { label: "" }).ok).toBe(false);
+    expect(updateCredential(NOTE, "nope", { label: "x" }).ok).toBe(false);
   });
 });

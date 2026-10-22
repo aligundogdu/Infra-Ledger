@@ -97,7 +97,7 @@ Anything you like goes here: setup notes, services, incidents.
 ```
 ````
 
-In reading view the `creds` block renders as a table with masked secrets and buttons to reveal, copy, change and view history. The `network` block renders grouped by Public, Private, VPN and Ports, with buttons to copy an address, copy an SSH command or add a new address or port from a form.
+In reading view the `creds` block renders as a table with masked secrets and buttons to reveal, copy, edit, change the password and view history. Editing changes label, user, kind, note and key settings; the password only changes through Change password, so the old one lands in history. The id stays fixed because refs in other notes point to it. The `network` block renders grouped by Public, Private, VPN and Ports, with buttons to copy an address, copy an SSH command, edit or delete a row, or add a new address or port from a form.
 
 A server with a single address can skip the block and use properties instead: `ip: 10.0.0.4`, `host: box.example.com`, `ports: [22 ssh, 443 https]`. Those show as chips above the credentials.
 
