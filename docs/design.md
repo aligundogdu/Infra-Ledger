@@ -62,7 +62,7 @@ tags: [homelab]     # opsiyonel
 ```
 
 Netlesimler:
-- `type` listesine `other` eklendi; kapsayici, domain, router gibi diger durumlarda `other` kullanilir. Taninmayan bir deger gelirse hata uretilmez, "other" gibi indekslenir.
+- `type` listesine `other` eklendi; kapsayici, domain, router gibi diger durumlarda `other` kullanilir. Taninmayan bir `type` degeri (kullanicinin kendi notlarindaki `project`, `dashboard` gibi) kaynak sayilmaz ve sessizce yok sayilir (2026-10-22 duzeltmesi: gercek vault'ta 27 gorev notu envantere dusuyordu).
 - Frontmatter duz (flat) tutulur, ic ice yapi yoktur. Boylece Obsidian properties arayuzu, arama ve Dataview sorunsuz calisir. Notun geri kalani serbest metindir, plugin dokunmaz.
 - "Kaynak klasoru" ayari veri modeli secmez; indeks tum vault'a bakar (bkz. Parser ve indeks).
 

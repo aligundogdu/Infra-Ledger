@@ -119,12 +119,14 @@ export function resourceFromFrontmatter(
 ): Resource | null {
   if (!fm || fm.type === undefined || fm.type === null || fm.type === "") return null;
   const type = String(fm.type).toLowerCase();
+  // Many vaults use `type` for their own notes (project, dashboard...); only ours make a resource.
+  if (!RESOURCE_TYPES.includes(type)) return null;
   const { ports, invalid } = parsePorts(fm.ports);
   const blockEntries = network.flatMap((n) => n.entries);
   const resource: Resource = {
     path,
     name: basename,
-    type: (RESOURCE_TYPES.includes(type) ? type : "other") as ResourceType,
+    type: type as ResourceType,
     addresses: [
       ...parseAddresses(fm.ip, false),
       ...blockEntries.flatMap((e): Address[] => {

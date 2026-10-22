@@ -20,8 +20,11 @@ describe("resourceFromFrontmatter", () => {
       addresses: [{ value: "10.0.0.4", isHost: false, scope: "private", source: "properties", extra: {} }],
     });
   });
-  it("maps unknown types to other and returns null without a type", () => {
-    expect(resourceFromFrontmatter("a.md", "a", { type: "router" })?.type).toBe("other");
+  it("ignores notes whose type isn't an Infra Ledger type, and those without a type", () => {
+    expect(resourceFromFrontmatter("a.md", "a", { type: "project" })).toBeNull();
+    expect(resourceFromFrontmatter("a.md", "a", { type: "dashboard" })).toBeNull();
+    expect(resourceFromFrontmatter("a.md", "a", { type: "Server" })?.type).toBe("server");
+    expect(resourceFromFrontmatter("a.md", "a", { type: "other" })?.type).toBe("other");
     expect(resourceFromFrontmatter("a.md", "a", { ip: "1.2.3.4" })).toBeNull();
     expect(resourceFromFrontmatter("a.md", "a", null)).toBeNull();
   });
