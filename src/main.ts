@@ -15,6 +15,7 @@ import { ConfirmModal } from "./ui/confirm-modal";
 import { AddCredentialModal } from "./ui/credential-modal";
 import { CredentialPicker } from "./ui/credential-picker";
 import { HistoryModal } from "./ui/history-modal";
+import { SearchModal } from "./ui/search-modal";
 import { ClipboardGuard } from "./util/clipboard";
 import type { Credential } from "./model";
 
@@ -34,6 +35,11 @@ export default class InfraLedgerPlugin extends Plugin {
       ctx.addChild(new CredsBlockView(el, this, source, ctx.sourcePath));
     });
 
+    this.addCommand({
+      id: "search",
+      name: "Search",
+      callback: () => new SearchModal(this.app, this).open(),
+    });
     this.addCommand({
       id: "change-password",
       name: "Change password",

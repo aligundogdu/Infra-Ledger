@@ -134,3 +134,9 @@
   width: var(--icon-s);
   height: var(--icon-s);
 }
+
+.infra-ledger-suggestion-meta {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  font-family: var(--font-monospace);
+}
