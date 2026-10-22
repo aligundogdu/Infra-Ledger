@@ -378,6 +378,14 @@ Her uyari tek satir: ne oldugu, hangi not, tiklayinca not acilir. Gruplar:
 - Blok sorunlari: YAML hatasi ve uyarilar (gecersiz port, eksik id vb.), not basina sayi ile.
 - Sekme basliginda toplam uyari sayisi gorunur. Uyari yoksa "Nothing to fix."
 
+### related blogu
+
+Kisi, lokasyon ve saglayici notlarinda "bu nota baglanan her sey" listesi. Blok bos yazilir (` ```related ` + ` ``` `), icerigi indeksten uretilir; veri kopyalanmaz.
+
+- Bolumler (bos olanlar gosterilmez): Has now (bu nota zimmetli cihazlar, since tarihi ve Return butonu), Had before (cihaz defterlerinden cikarilan bitmis zimmet donemleri: ilk "assigned to bu not" donemi acar, sonraki returned, retired, lost ya da baskasina assigned kapatir), Located here (`location` bu not), Provided here (`provider` bu not).
+- Eslesme: link ise Obsidian'in link cozumlemesiyle hedef notun yolu bu not olmali; duz metin ise not adiyla buyuk/kucuk harf duyarsiz ayni olmali.
+- `person` ve `location` sablonlari blogu icerir. "Add related list" komutu mevcut notun sonuna ekler (zaten varsa eklemez).
+
 ### Ayarlar
 
 - `warrantyWarnDays` (varsayilan 30, 0 = kapali)
@@ -386,4 +394,5 @@ Her uyari tek satir: ne oldugu, hangi not, tiklayinca not acilir. Gruplar:
 ### Test (0.4.0)
 
 - Birim: filtreleme (her filtre, metin + `@alan`, birlikte), siralama, kisiye gore gruplama (link ve duz metin ayni kisi sayilmaz, emekliler haric, not assigned grubu), uyari hesaplari (garanti gecmis/yaklasan/sinir gunu/kapali, sifre yasi esigi/kapali/updated yok sayaci, duplicate, ref, sync kopyasi, blok sorunlari).
+- Birim (related): kisinin simdiki cihazlari (link ve duz metin), bitmis donemler (iade, baskasina zimmet), lokasyon ve saglayici listeleri.
 - Manuel: panelin acilmasi, filtreler, siralama, sekmeler, tiklayinca not acilmasi, indeks degisince yenilenmesi, mobilde gorunum.

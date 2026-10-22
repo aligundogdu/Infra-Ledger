@@ -1,7 +1,7 @@
 import type { BlockIssue, Credential, CredRef, ParseResult } from "../model";
 import { spaceOf, type Space } from "../spaces";
 import { guessScope, type NetworkParseResult, type Scope } from "../network/parse";
-import { ledgerStatus, type LedgerParseResult, type LedgerStatus } from "../ledger/parse";
+import { ledgerStatus, type LedgerEvent, type LedgerParseResult, type LedgerStatus } from "../ledger/parse";
 import { parseLinkValue } from "../links";
 
 export type ResourceType = "server" | "database" | "cloud" | "service" | "device" | "person" | "location" | "other";
@@ -60,6 +60,8 @@ export interface Resource {
   links: Partial<Record<LinkField, string>>;
   /** Assignment state, for devices and notes with a ledger or assigned_to. */
   status?: LedgerStatus;
+  /** Ledger events of the note, newest first. */
+  events: LedgerEvent[];
   sshPort: number;
   tags: string[];
   space: string | null;
@@ -144,6 +146,7 @@ export function resourceFromFrontmatter(
     tags: toTags(fm.tags),
     space,
     links: {},
+    events: [],
     warnings: invalid.map((row) => `Port "${row}" is not a number between 1 and 65535.`),
   };
   for (const [key, field] of [["url", "url"], ["env", "env"], ["device_type", "deviceType"], ["model", "model"],
@@ -158,6 +161,7 @@ export function resourceFromFrontmatter(
     if (value.link) resource.links[key] = value.link;
   }
   const events = ledger.flatMap((l) => l.events);
+  resource.events = events;
   if (resource.type === "device" || events.length > 0 || resource.assignedTo) {
     resource.status = ledgerStatus(events, fm.assigned_to);
   }

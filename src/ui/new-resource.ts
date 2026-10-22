@@ -18,6 +18,7 @@ const INVALID_NAME = /[\\/:*?"<>|#^[\]]/;
 
 const WITH_NETWORK: ResourceType[] = ["server", "device"];
 const WITH_LEDGER: ResourceType[] = ["device"];
+const WITH_RELATED: ResourceType[] = ["person", "location"];
 
 export function resourceTemplate(type: ResourceType, name: string): string {
   const fields = FIELDS[type].map((f) => (f.includes(":") ? f : `${f}:`));
@@ -27,6 +28,7 @@ export function resourceTemplate(type: ResourceType, name: string): string {
     ...(WITH_NETWORK.includes(type) ? block("network") : []),
     ...(isDirectoryType(type) ? [] : block("creds")),
     ...(WITH_LEDGER.includes(type) ? block("ledger") : []),
+    ...(WITH_RELATED.includes(type) ? block("related") : []),
   ].join("\n");
 }
 

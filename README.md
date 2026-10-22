@@ -120,6 +120,8 @@ warranty_until: 2027-05-01
 ```
 ````
 
+Add an empty `related` block to a person, location or provider note and it lists everything that points there: the devices someone has now (with a Return button), what they had before, what sits at a location, what runs at a provider. New person and location notes come with it.
+
 **Assign** picks a person (person notes first, any name works), logs the previous holder as returned and updates `assigned_to`. **Return** and **Add event** work the same way. Because people, locations and providers can be notes, their backlinks list every device and server that points to them. `ledger` blocks work on any resource, so a server can log "moved to HEL1" or "RAM upgraded" too.
 
 Rules worth knowing:
@@ -134,6 +136,7 @@ Rules worth knowing:
 |---|---|
 | Search | Find a resource or credential and copy from it |
 | Open inventory | Side panel with Resources, People and Warnings |
+| Add related list | Add a `related` block to the current note |
 | New resource | Create a resource note from a template |
 | Add credential | Add a credential to the current note |
 | Add address | Add an ip or host to the current note's network block |

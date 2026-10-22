@@ -8,11 +8,12 @@ import {
   type NewCredential,
 } from "./creds/mutate";
 import { LedgerIndex } from "./index/ledger-index";
-import { blockOrdinalAtLine, firstCredsBlockLine } from "./creds/locate";
+import { blockOrdinalAtLine, findBlocks, firstCredsBlockLine } from "./creds/locate";
 import { addNetworkEntry, deleteNetworkEntry, type NetworkEntryRef, type NewAddress, type NewPort } from "./network/mutate";
 import { NetworkBlockView } from "./ui/network-view";
 import { AddAddressModal, AddPortModal } from "./ui/network-modal";
 import { LedgerBlockView } from "./ui/ledger-view";
+import { RelatedBlockView } from "./ui/related-view";
 import { AddEventModal, openAssignFlow, openReturnFlow } from "./ui/ledger-modals";
 import { addEvent, assignTo, returnDevice, type NewEvent } from "./ledger/mutate";
 import { DEFAULT_SETTINGS, InfraLedgerSettingTab, type InfraLedgerSettings } from "./settings";
@@ -62,6 +63,19 @@ export default class InfraLedgerPlugin extends Plugin {
     });
     this.registerMarkdownCodeBlockProcessor("ledger", (source, el, ctx) => {
       ctx.addChild(new LedgerBlockView(el, this, source, ctx.sourcePath));
+    });
+    this.registerMarkdownCodeBlockProcessor("related", (_source, el, ctx) => {
+      ctx.addChild(new RelatedBlockView(el, this, ctx.sourcePath));
+    });
+    this.addCommand({
+      id: "add-related-list",
+      name: "Add related list",
+      checkCallback: (checking) => {
+        const file = this.app.workspace.getActiveFile();
+        if (!file || file.extension !== "md") return false;
+        if (!checking) void this.addRelatedBlock(file);
+        return true;
+      },
     });
 
     addIcon(RIBBON_ICON_ID, RIBBON_ICON);
@@ -264,6 +278,17 @@ export default class InfraLedgerPlugin extends Plugin {
       await leaf.setViewState({ type: INVENTORY_VIEW, active: true });
     }
     workspace.revealLeaf(leaf);
+  }
+
+  async addRelatedBlock(file: TFile): Promise<void> {
+    let added = false;
+    await this.app.vault.process(file, (note) => {
+      if (findBlocks(note, "related").length > 0) return note;
+      added = true;
+      const base = note.length === 0 || note.endsWith("\n") ? note : note + "\n";
+      return `${base}${base.endsWith("\n\n") || base.length === 0 ? "" : "\n"}\`\`\`related\n\`\`\`\n`;
+    });
+    this.notify(added ? "Added a related list at the end of the note." : "This note already has a related list.");
   }
 
   openAssign(path: string): void {

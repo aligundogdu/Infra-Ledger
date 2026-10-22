@@ -16,7 +16,7 @@ describe("resourceFromFrontmatter", () => {
     });
     expect(r).toEqual({
       path: "Infra/Home.md", name: "Home", type: "server", provider: "proxmox", env: "home", sshPort: 2222,
-      tags: ["homelab", "pve"], ports: [], space: null, warnings: [], links: {},
+      tags: ["homelab", "pve"], ports: [], space: null, warnings: [], links: {}, events: [],
       addresses: [{ value: "10.0.0.4", isHost: false, scope: "private", source: "properties", extra: {} }],
     });
   });

@@ -6,7 +6,9 @@ env: prod
 ports:
   - 25 smtp
   - 993 imaps
-tags: [work]
+tags:
+  - work
+assigned_to: "[[Mehmet Kaya]]"
 ---
 
 # Mail Server

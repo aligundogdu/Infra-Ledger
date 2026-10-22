@@ -13,3 +13,6 @@ assigned_to: "[[Mehmet Kaya]]"
   secret: "abm-secret"
   kind: panel
 ```
+
+```related
+```

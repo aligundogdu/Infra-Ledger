@@ -66,6 +66,9 @@ Open `test-vault/` as a vault in Obsidian (Open another vault → Open folder as
 - [ ] Assign Laptop 07 to Ayşe: People tab moves it without reopening the panel.
 - [ ] Warnings tab: Office Printer warranty ends soon; postgres app on HomeServer changed long ago; count of credentials without a change date; duplicate `homeserver-root`; ref `missing-id`; sync copy; block problems for Scratch.md and the 99999 port. Clicking a line opens the note.
 - [ ] Settings: set warranty days to 0, the warranty group disappears.
+- [ ] `People/Mehmet Kaya.md`: related list shows Laptop 07 under "Has now" with a Return button. After assigning Laptop 07 to Ayşe: Mehmet shows it under "Had before" with dates, Ayşe under "Has now".
+- [ ] `Locations/Office 2F.md`: Laptop 07 and Office Printer under "Located here". `Infra/Apple.md`: Laptop 07 under "Provided here".
+- [ ] "Add related list" on a note without one adds the block at the end; running it again says it already has one.
 
 ## Mobile
 

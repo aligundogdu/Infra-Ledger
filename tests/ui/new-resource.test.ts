@@ -20,7 +20,9 @@ describe("resourceTemplate", () => {
     }
     for (const type of ["person", "location"] as const) {
       expect(findCredsBlocks(resourceTemplate(type, "X"))).toHaveLength(0);
+      expect(findBlocks(resourceTemplate(type, "X"), "related")).toHaveLength(1);
     }
+    expect(findBlocks(resourceTemplate("server", "X"), "related")).toHaveLength(0);
     const device = resourceTemplate("device", "Laptop");
     expect(findBlocks(device, "ledger")).toHaveLength(1);
     expect(parse(device.split("---")[1])).toMatchObject({ assigned_to: null, serial: null });
