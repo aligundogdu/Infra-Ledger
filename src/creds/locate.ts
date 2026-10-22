@@ -34,6 +34,11 @@ function splitLines(note: string): Line[] {
 
 /** Finds fenced ```creds (or ~~~creds) blocks, skipping fences of other languages. */
 export function findCredsBlocks(note: string): BlockLocation[] {
+  return findBlocks(note, "creds");
+}
+
+/** Finds fenced code blocks of one language, skipping fences of other languages. */
+export function findBlocks(note: string, language: string): BlockLocation[] {
   const lines = splitLines(note);
   const blocks: BlockLocation[] = [];
   let i = 0;
@@ -57,7 +62,7 @@ export function findCredsBlocks(note: string): BlockLocation[] {
       i++;
       continue;
     }
-    if (lang === "creds") {
+    if (lang === language) {
       const contentStart = lines[i].next;
       const contentEnd = lines[close].start;
       blocks.push({
@@ -84,8 +89,17 @@ export function findBlockWithId(note: string, id: string): BlockLocation | null 
 /** 0-based line number where the note's first creds block starts, or null. */
 export function firstCredsBlockLine(note: string): number | null {
   const first = findCredsBlocks(note)[0];
-  if (!first) return null;
+  return first ? lineAt(note, first.start) : null;
+}
+
+/** Which block of this language (0-based) opens on the given line, or null. */
+export function blockOrdinalAtLine(note: string, language: string, line: number): number | null {
+  const i = findBlocks(note, language).findIndex((b) => lineAt(note, b.start) === line);
+  return i === -1 ? null : i;
+}
+
+function lineAt(note: string, offset: number): number {
   let line = 0;
-  for (let i = 0; i < first.start; i++) if (note.charCodeAt(i) === 10) line++;
+  for (let i = 0; i < offset; i++) if (note.charCodeAt(i) === 10) line++;
   return line;
 }

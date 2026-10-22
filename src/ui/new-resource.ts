@@ -4,7 +4,7 @@ import type { Space } from "../spaces";
 import type InfraLedgerPlugin from "../main";
 
 const FIELDS: Record<ResourceType, string[]> = {
-  server: ["ip", "host", "provider", "env", "ssh_port: 22", "ports: []"],
+  server: ["provider", "env", "ssh_port: 22"],
   database: ["host", "provider", "env"],
   cloud: ["provider", "url"],
   service: ["url", "provider", "env"],
@@ -13,9 +13,12 @@ const FIELDS: Record<ResourceType, string[]> = {
 
 const INVALID_NAME = /[\\/:*?"<>|#^[\]]/;
 
+const WITH_NETWORK: ResourceType[] = ["server"];
+
 export function resourceTemplate(type: ResourceType, name: string): string {
   const fields = FIELDS[type].map((f) => (f.includes(":") ? f : `${f}:`));
-  return ["---", `type: ${type}`, ...fields, "tags: []", "---", "", `# ${name}`, "", "```creds", "```", ""].join("\n");
+  const network = WITH_NETWORK.includes(type) ? ["```network", "```", ""] : [];
+  return ["---", `type: ${type}`, ...fields, "tags: []", "---", "", `# ${name}`, "", ...network, "```creds", "```", ""].join("\n");
 }
 
 export class NewResourceModal extends Modal {

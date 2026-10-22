@@ -95,13 +95,15 @@ function credentialItem(ic: IndexedCredential, resource: Resource | null, path: 
 }
 
 function resourceTerms(r: Resource): string[] {
-  const addresses = [...r.ips, ...r.hosts].flatMap((a) => [a.value, a.label]);
-  const ports = r.ports.flatMap((p) => [String(p.port), p.label]);
+  const addresses = r.addresses.flatMap((a) => [
+    a.value, a.label, a.scope, a.iface, a.mac, a.gateway, a.vlan, a.note, ...Object.values(a.extra),
+  ]);
+  const ports = r.ports.flatMap((p) => [String(p.port), p.service, p.note, ...Object.values(p.extra)]);
   return [r.type, r.provider, r.env, r.space, ...addresses, ...ports, ...r.tags].filter((x): x is string => !!x);
 }
 
 function describe(r: Resource | null, space: string | null, extra: string | null): string {
-  const parts = r ? [r.type, r.env, (r.ips[0] ?? r.hosts[0])?.value] : ["no resource"];
+  const parts = r ? [r.type, r.env, r.addresses[0]?.value] : ["no resource"];
   return [space, ...parts, extra].filter(Boolean).join(" · ");
 }
 

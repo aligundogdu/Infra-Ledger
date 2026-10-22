@@ -1,21 +1,38 @@
 ---
 type: server
-ip:
-  - 192.168.1.10 lan
-  - 100.64.0.7 tailscale
 provider: proxmox
 env: home
 ssh_port: 22
-ports:
-  - 8006 proxmox
-  - 5432 postgres
-  - 99999 typo
 tags: [homelab]
 ---
 
 # HomeServer
 
 Proxmox host in the closet. Free text stays untouched by the plugin.
+
+```network
+- ip: 85.10.20.30/26
+  scope: public
+  label: main
+  iface: eth0
+  mac: 00:11:22:33:44:55
+  gateway: 85.10.20.1
+- ip: 85.10.20.31
+  label: failover
+- ip: 192.168.1.10/24
+  label: lan
+  iface: vmbr0
+  vlan: 20
+  ethId: 2
+- ip: 100.64.0.7
+  label: tailscale
+- port: 8006
+  service: proxmox
+- port: 5432
+  service: postgres
+  note: lan only
+- port: 99999
+```
 
 ```creds
 # root first

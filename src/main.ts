@@ -8,7 +8,10 @@ import {
   type NewCredential,
 } from "./creds/mutate";
 import { LedgerIndex } from "./index/ledger-index";
-import { firstCredsBlockLine } from "./creds/locate";
+import { blockOrdinalAtLine, firstCredsBlockLine } from "./creds/locate";
+import { addNetworkEntry, deleteNetworkEntry, type NetworkEntryRef, type NewAddress, type NewPort } from "./network/mutate";
+import { NetworkBlockView } from "./ui/network-view";
+import { AddAddressModal, AddPortModal } from "./ui/network-modal";
 import { DEFAULT_SETTINGS, InfraLedgerSettingTab, type InfraLedgerSettings } from "./settings";
 import { CredsBlockView } from "./ui/block-view";
 import { ChangePasswordModal } from "./ui/change-modal";
@@ -48,6 +51,11 @@ export default class InfraLedgerPlugin extends Plugin {
       const first = !info || firstCredsBlockLine(info.text) === info.lineStart;
       ctx.addChild(new CredsBlockView(el, this, source, ctx.sourcePath, first));
     });
+    this.registerMarkdownCodeBlockProcessor("network", (source, el, ctx) => {
+      const info = ctx.getSectionInfo(el);
+      const ordinal = info ? blockOrdinalAtLine(info.text, "network", info.lineStart) : null;
+      ctx.addChild(new NetworkBlockView(el, this, source, ctx.sourcePath, ordinal));
+    });
 
     addIcon(RIBBON_ICON_ID, RIBBON_ICON);
     this.addRibbonIcon(RIBBON_ICON_ID, "Infra Ledger: Search", () => new SearchModal(this.app, this).open());
@@ -84,6 +92,22 @@ export default class InfraLedgerPlugin extends Plugin {
         return true;
       },
     });
+
+    for (const [id, name, open] of [
+      ["add-address", "Add address", (path: string) => this.openAddAddress(path)],
+      ["add-port", "Add port", (path: string) => this.openAddPort(path)],
+    ] as const) {
+      this.addCommand({
+        id,
+        name,
+        checkCallback: (checking) => {
+          const file = this.app.workspace.getActiveFile();
+          if (!file || file.extension !== "md") return false;
+          if (!checking) open(file.path);
+          return true;
+        },
+      });
+    }
 
     this.app.workspace.onLayoutReady(async () => {
       this.index.watch((ref) => this.registerEvent(ref));
@@ -202,6 +226,32 @@ export default class InfraLedgerPlugin extends Plugin {
     const ok = await this.applyMutation(path, (note) => deleteHistoryEntry(note, id, index));
     if (ok) this.notify("History entry deleted.");
     return ok;
+  }
+
+  openAddAddress(path: string): void {
+    new AddAddressModal(this.app, this, path).open();
+  }
+
+  openAddPort(path: string): void {
+    new AddPortModal(this.app, this, path).open();
+  }
+
+  async addNetworkEntry(path: string, entry: NewAddress | NewPort, name: string): Promise<boolean> {
+    const ok = await this.applyMutation(path, (note) => addNetworkEntry(note, entry));
+    if (ok) this.notify(`Added ${name}.`);
+    return ok;
+  }
+
+  async deleteNetworkEntry(path: string, ref: NetworkEntryRef, name: string): Promise<boolean> {
+    const ok = await this.applyMutation(path, (note) => deleteNetworkEntry(note, ref));
+    if (ok) this.notify(`Deleted ${name}.`);
+    return ok;
+  }
+
+  /** User for SSH commands built from a note: its first ssh credential, else none. */
+  sshUserFor(path: string): string | undefined {
+    const creds = this.index.snapshot.credentials.filter((c) => c.path === path);
+    return (creds.find((c) => c.cred.kind === "ssh") ?? creds.find((c) => c.cred.user))?.cred.user;
   }
 
   /** Runs a pure mutation atomically on a note. On failure the note is left untouched. */

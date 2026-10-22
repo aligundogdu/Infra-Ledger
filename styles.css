@@ -160,3 +160,19 @@
 .infra-ledger-chip:hover {
   background: var(--background-modifier-hover);
 }
+
+.infra-ledger-group-title {
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin: var(--size-4-3) 0 var(--size-4-1);
+}
+.infra-ledger-network .infra-ledger-group-title:first-child {
+  margin-top: 0;
+}
+.infra-ledger-network .infra-ledger-footer {
+  display: flex;
+  gap: var(--size-4-2);
+}

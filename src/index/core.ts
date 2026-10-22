@@ -1,25 +1,40 @@
 import type { BlockIssue, Credential, CredRef, ParseResult } from "../model";
 import { spaceOf, type Space } from "../spaces";
+import { guessScope, type NetworkParseResult, type Scope } from "../network/parse";
 
 export type ResourceType = "server" | "database" | "cloud" | "service" | "other";
 const RESOURCE_TYPES: readonly string[] = ["server", "database", "cloud", "service", "other"];
 
 export interface Address {
   value: string;
+  isHost: boolean;
+  scope: Scope;
+  source: "properties" | "network";
   label?: string;
+  cidr?: string;
+  iface?: string;
+  mac?: string;
+  gateway?: string;
+  vlan?: string;
+  note?: string;
+  extra: Record<string, string>;
 }
 
 export interface Port {
   port: number;
-  label?: string;
+  proto: "tcp" | "udp";
+  source: "properties" | "network";
+  service?: string;
+  note?: string;
+  extra: Record<string, string>;
 }
 
 export interface Resource {
   path: string;
   name: string;
   type: ResourceType;
-  ips: Address[];
-  hosts: Address[];
+  /** In SSH order: properties ips, network block addresses, properties hosts. */
+  addresses: Address[];
   ports: Port[];
   url?: string;
   provider?: string;
@@ -36,6 +51,7 @@ export interface FileRecord {
   basename: string;
   frontmatter: Record<string, unknown> | null;
   blocks: ParseResult[];
+  network?: NetworkParseResult[];
 }
 
 export interface IndexedCredential {
@@ -74,17 +90,33 @@ export function resourceFromFrontmatter(
   basename: string,
   fm: Record<string, unknown> | null,
   space: string | null = null,
+  network: NetworkParseResult[] = [],
 ): Resource | null {
   if (!fm || fm.type === undefined || fm.type === null || fm.type === "") return null;
   const type = String(fm.type).toLowerCase();
   const { ports, invalid } = parsePorts(fm.ports);
+  const blockEntries = network.flatMap((n) => n.entries);
   const resource: Resource = {
     path,
     name: basename,
     type: (RESOURCE_TYPES.includes(type) ? type : "other") as ResourceType,
-    ips: parseAddresses(fm.ip),
-    hosts: parseAddresses(fm.host),
-    ports,
+    addresses: [
+      ...parseAddresses(fm.ip, false),
+      ...blockEntries.flatMap((e): Address[] => {
+        if (e.type !== "address") return [];
+        const { type: _t, index: _i, scopeGuessed: _g, ...rest } = e;
+        return [{ ...rest, source: "network" }];
+      }),
+      ...parseAddresses(fm.host, true),
+    ],
+    ports: [
+      ...ports,
+      ...blockEntries.flatMap((e): Port[] => {
+        if (e.type !== "port") return [];
+        const { type: _t, index: _i, ...rest } = e;
+        return [{ ...rest, source: "network" }];
+      }),
+    ],
     sshPort: toPort(fm.ssh_port),
     tags: toTags(fm.tags),
     space,
@@ -97,12 +129,21 @@ export function resourceFromFrontmatter(
   return resource;
 }
 
-/** One value or a list; each row is "value optional label". */
-export function parseAddresses(value: unknown): Address[] {
+/** Properties ip or host: one value or a list; each row is "value optional label". */
+export function parseAddresses(value: unknown, isHost: boolean): Address[] {
   return rows(value).map((row) => {
     const [head, ...rest] = row.split(/\s+/);
     const label = rest.join(" ");
-    return label ? { value: head, label } : { value: head };
+    const [address, cidr] = isHost ? [head] : head.split("/", 2);
+    return {
+      value: address,
+      isHost,
+      scope: guessScope(address, isHost),
+      source: "properties",
+      ...(cidr && { cidr }),
+      ...(label && { label }),
+      extra: {},
+    };
   });
 }
 
@@ -116,8 +157,8 @@ export function parsePorts(value: unknown): { ports: Port[]; invalid: string[] }
       invalid.push(row);
       continue;
     }
-    const label = rest.join(" ");
-    ports.push(label ? { port, label } : { port });
+    const service = rest.join(" ");
+    ports.push({ port, proto: "tcp", source: "properties", ...(service && { service }), extra: {} });
   }
   return { ports, invalid };
 }
@@ -139,9 +180,9 @@ export function buildIndex(files: FileRecord[], spaces: Space[] = []): LedgerSna
 
   for (const f of files) {
     const space = spaceOf(f.path, spaces);
-    const resource = resourceFromFrontmatter(f.path, f.basename, f.frontmatter, space);
+    const resource = resourceFromFrontmatter(f.path, f.basename, f.frontmatter, space, f.network);
     if (resource) resources.push(resource);
-    const fileIssues = f.blocks.flatMap((b) => b.issues);
+    const fileIssues = [...f.blocks, ...(f.network ?? [])].flatMap((b) => b.issues);
     if (fileIssues.length > 0) issues.set(f.path, fileIssues);
     for (const block of f.blocks) {
       for (const entry of block.entries) {

@@ -36,7 +36,9 @@ export type IssueCode =
   | "missing-id"
   | "missing-label"
   | "invalid-field"
-  | "invalid-ref";
+  | "invalid-ref"
+  | "invalid-network-entry"
+  | "invalid-port";
 
 export interface BlockIssue {
   level: "error" | "warning";

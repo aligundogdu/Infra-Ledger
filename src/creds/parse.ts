@@ -1,4 +1,5 @@
-import { isMap, isScalar, isSeq, LineCounter, parseDocument, YAMLMap } from "yaml";
+import { isMap, isSeq, YAMLMap } from "yaml";
+import { parseListBlock } from "./list-block";
 import { readRawString } from "./raw-scalar";
 import { KINDS } from "../model";
 import type { BlockIssue, Credential, Entry, HistoryEntry, Kind, ParseResult } from "../model";
@@ -7,31 +8,10 @@ const CORE_FIELDS = ["id", "label", "user", "secret", "kind", "note", "updated"]
 type CoreField = (typeof CORE_FIELDS)[number];
 
 export function parseCredsBlock(text: string): ParseResult {
-  const lineCounter = new LineCounter();
-  const doc = parseDocument(text, { version: "1.2", schema: "core", lineCounter, keepSourceTokens: false });
-  const lineOf = (offset: number | undefined) =>
-    offset === undefined ? undefined : lineCounter.linePos(offset).line;
-
-  if (doc.errors.length > 0) {
-    const err = doc.errors[0];
-    return {
-      entries: [],
-      ok: false,
-      issues: [{ level: "error", code: "yaml", message: err.message, line: err.linePos?.[0].line }],
-    };
-  }
-
-  const root = doc.contents;
-  if (root === null || (isScalar(root) && root.value === null)) {
-    return { entries: [], issues: [], ok: true };
-  }
-  if (!isSeq(root)) {
-    return {
-      entries: [],
-      ok: false,
-      issues: [{ level: "error", code: "not-a-list", message: "A creds block must be a YAML list.", line: 1 }],
-    };
-  }
+  const block = parseListBlock(text, "creds");
+  if (block.kind === "empty") return { entries: [], issues: [], ok: true };
+  if (block.kind === "error") return { entries: [], issues: [block.issue], ok: false };
+  const { seq: root, lineOf } = block;
 
   const entries: Entry[] = [];
   const issues: BlockIssue[] = [];

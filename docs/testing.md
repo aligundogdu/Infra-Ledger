@@ -35,8 +35,12 @@ Open `test-vault/` as a vault in Obsidian (Open another vault → Open folder as
 
 - [ ] Settings → Spaces: add `Work` → `Work`. Rename `Infra` to `Personal`.
 - [ ] Search subtitles show `Personal · ...` and `Work · ...`. `@work` lists only Mail Server, `@p root` only Personal results, `@nope` explains the available spaces.
-- [ ] HomeServer shows chips `192.168.1.10 lan`, `100.64.0.7 tailscale`, `8006 proxmox`, `5432 postgres` above the first block, and a warning for port `99999 typo`. Clicking a chip copies the value.
-- [ ] Search `tailscale root`, Cmd/Ctrl+Enter: address picker with both ips; picking one copies `ssh -p 22 root@<ip>`.
+- [ ] HomeServer network block: groups Public (main, failover), Private (lan, with `vmbr0`, `vlan 20` and `ethId: 2`), VPN (tailscale), Ports (8006, 5432 with note). Warning for port 99999. `failover` shows "public (guessed)".
+- [ ] Address row buttons: copy address, copy SSH command (`ssh -p 22 root@<ip>`, user from the root credential), delete with confirmation.
+- [ ] Add address with `10.0.0.9/24`, scope auto, label `test`: appears under Private. Add address `box.example.com`: appears under Public. Add port `443`, service `https`: appears under Ports. Text outside the block stays the same.
+- [ ] Commands "Add address" and "Add port" in a note without a network block create one above the creds block.
+- [ ] Mail Server (properties `ip` and `host`): chips above its creds block, clicking copies.
+- [ ] Search `tailscale root`, `vmbr0`, `ethId`, `failover`: HomeServer results. Cmd/Ctrl+Enter on HomeServer root: picker lists all four addresses with label, scope and command.
 - [ ] Mail Server (one ip, one host): picker shows both. Forge (no address): Notice explains there is no SSH command.
 - [ ] New resource with two spaces: space dropdown, note lands in the chosen folder, the choice is remembered next time.
 - [ ] An old `data.json` with `resourceFolder` loads as one space.

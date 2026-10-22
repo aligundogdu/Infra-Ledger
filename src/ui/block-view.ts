@@ -76,9 +76,14 @@ export class CredsBlockView extends MarkdownRenderChild {
   private renderResource(el: HTMLElement, snapshot: LedgerSnapshot): void {
     const r = snapshot.resources.find((res) => res.path === this.sourcePath);
     if (!r) return;
+    // Addresses from a network block have their own table; only properties ones become chips here.
     const chips = [
-      ...[...r.ips, ...r.hosts].map((a) => ({ text: a.label ? `${a.value} ${a.label}` : a.value, copy: a.value })),
-      ...r.ports.map((p) => ({ text: p.label ? `${p.port} ${p.label}` : `${p.port}`, copy: String(p.port) })),
+      ...r.addresses
+        .filter((a) => a.source === "properties")
+        .map((a) => ({ text: a.label ? `${a.value} ${a.label}` : a.value, copy: a.value })),
+      ...r.ports
+        .filter((p) => p.source === "properties")
+        .map((p) => ({ text: p.service ? `${p.port} ${p.service}` : `${p.port}`, copy: String(p.port) })),
     ];
     if (chips.length === 0 && r.warnings.length === 0) return;
     const row = el.createDiv({ cls: "infra-ledger-resource" });

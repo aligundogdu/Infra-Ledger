@@ -1,9 +1,10 @@
-import { Document, isMap, isScalar, isSeq, parseDocument, Scalar, visit, YAMLMap, YAMLSeq } from "yaml";
+import { Document, isMap, isScalar, isSeq, YAMLMap, YAMLSeq } from "yaml";
+import { loadDoc, quoted, render, splice, STALE, type MutateResult } from "./yaml-doc";
 import { findCredsBlocks, type BlockLocation } from "./locate";
 import { parseCredsBlock } from "./parse";
 import type { Kind } from "../model";
 
-export type MutateResult = { ok: true; note: string } | { ok: false; reason: string };
+export type { MutateResult } from "./yaml-doc";
 
 export interface NewCredential {
   id: string;
@@ -14,7 +15,6 @@ export interface NewCredential {
   note?: string;
 }
 
-const STALE = "Can't save: the block changed since you opened this. Reopen and try again.";
 
 export function changeSecret(note: string, id: string, newSecret: string, today: string, reason?: string): MutateResult {
   return editCredential(note, id, (item) => {
@@ -133,39 +133,8 @@ function locateUnique(note: string, id: string): Target | string {
   return hits[0];
 }
 
-/**
- * Parses block content and pins every plain scalar to its source text, so that
- * re-serialising never turns `0123` into `123` or `0xff` into `255`.
- */
-function loadDoc(content: string): Document | string {
-  const doc = parseDocument(content, { version: "1.2", schema: "core" });
-  if (doc.errors.length > 0) return STALE;
-  visit(doc, {
-    Scalar(_key, node) {
-      if (node.type !== Scalar.PLAIN || typeof node.value === "string" || !node.range) return;
-      const raw = content.slice(node.range[0], node.range[1]).trim();
-      if (raw !== "") node.value = raw;
-    },
-  });
-  return doc;
-}
-
 function rawOf(item: YAMLMap, key: string): string | null {
   const node = item.get(key, true);
   if (!isScalar(node) || node.value === null || node.value === undefined) return null;
   return String(node.value);
-}
-
-function quoted(value: string): Scalar {
-  const s = new Scalar(value);
-  s.type = Scalar.QUOTE_DOUBLE;
-  return s;
-}
-
-function render(doc: Document): string {
-  return doc.toString({ lineWidth: 0, indentSeq: true });
-}
-
-function splice(note: string, block: BlockLocation, content: string): string {
-  return note.slice(0, block.contentStart) + content + note.slice(block.contentEnd);
 }

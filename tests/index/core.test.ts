@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildIndex, parseAddresses, parsePorts, resourceFromFrontmatter, type FileRecord } from "../../src/index/core";
 import { parseCredsBlock } from "../../src/creds/parse";
+import { parseNetworkBlock } from "../../src/network/parse";
 
 function file(path: string, fm: Record<string, unknown> | null, ...blocks: string[]): FileRecord {
   const basename = path.split("/").pop()!.replace(/\.md$/, "");
@@ -14,7 +15,8 @@ describe("resourceFromFrontmatter", () => {
     });
     expect(r).toEqual({
       path: "Infra/Home.md", name: "Home", type: "server", provider: "proxmox", env: "home", sshPort: 2222,
-      tags: ["homelab", "pve"], ips: [{ value: "10.0.0.4" }], hosts: [], ports: [], space: null, warnings: [],
+      tags: ["homelab", "pve"], ports: [], space: null, warnings: [],
+      addresses: [{ value: "10.0.0.4", isHost: false, scope: "private", source: "properties", extra: {} }],
     });
   });
   it("maps unknown types to other and returns null without a type", () => {
@@ -33,21 +35,24 @@ describe("resourceFromFrontmatter", () => {
 
 describe("parseAddresses", () => {
   it("accepts a single value, a list and labels", () => {
-    expect(parseAddresses("10.0.0.4")).toEqual([{ value: "10.0.0.4" }]);
-    expect(parseAddresses(["85.10.20.30 public", "10.0.0.4   private net", "", null])).toEqual([
-      { value: "85.10.20.30", label: "public" },
-      { value: "10.0.0.4", label: "private net" },
+    const base = { source: "properties", extra: {} };
+    expect(parseAddresses("10.0.0.4", false)).toEqual([{ ...base, value: "10.0.0.4", isHost: false, scope: "private" }]);
+    expect(parseAddresses(["85.10.20.30/26 public", "10.0.0.4   private net", "", null], false)).toEqual([
+      { ...base, value: "85.10.20.30", isHost: false, scope: "public", cidr: "26", label: "public" },
+      { ...base, value: "10.0.0.4", isHost: false, scope: "private", label: "private net" },
     ]);
-    expect(parseAddresses(undefined)).toEqual([]);
-    expect(parseAddresses("  ")).toEqual([]);
+    expect(parseAddresses("box.local", true)).toEqual([{ ...base, value: "box.local", isHost: true, scope: "public" }]);
+    expect(parseAddresses(undefined, false)).toEqual([]);
+    expect(parseAddresses("  ", false)).toEqual([]);
   });
 });
 
 describe("parsePorts", () => {
   it("parses numbers, labelled strings and reports invalid rows", () => {
-    expect(parsePorts(443)).toEqual({ ports: [{ port: 443 }], invalid: [] });
+    const base = { proto: "tcp", source: "properties", extra: {} };
+    expect(parsePorts(443)).toEqual({ ports: [{ ...base, port: 443 }], invalid: [] });
     expect(parsePorts(["443 https", "5432 postgres", 8006, "abc web", "70000", ""])).toEqual({
-      ports: [{ port: 443, label: "https" }, { port: 5432, label: "postgres" }, { port: 8006 }],
+      ports: [{ ...base, port: 443, service: "https" }, { ...base, port: 5432, service: "postgres" }, { ...base, port: 8006 }],
       invalid: ["abc web", "70000"],
     });
   });
@@ -76,6 +81,24 @@ describe("spaces", () => {
 });
 
 describe("buildIndex", () => {
+  it("merges properties and network block addresses in SSH order", () => {
+    const network = parseNetworkBlock("- ip: 85.10.20.30\n  label: main\n- port: 5432\n  service: postgres\n- port: abc\n");
+    const s = buildIndex([
+      { ...file("Box.md", { type: "server", ip: "10.0.0.4 lan", host: "box.example.com", ports: ["22 ssh"] }), network: [network] },
+    ]);
+    const r = s.resources[0];
+    expect(r.addresses.map((a) => [a.value, a.source])).toEqual([
+      ["10.0.0.4", "properties"],
+      ["85.10.20.30", "network"],
+      ["box.example.com", "properties"],
+    ]);
+    expect(r.ports.map((p) => [p.port, p.service, p.source])).toEqual([
+      [22, "ssh", "properties"],
+      [5432, "postgres", "network"],
+    ]);
+    expect(s.issues.get("Box.md")?.map((i) => i.code)).toEqual(["invalid-port"]);
+  });
+
   it("reports invalid ports as file issues", () => {
     const s = buildIndex([file("A.md", { type: "server", ports: ["99999 nope"] })]);
     expect(s.resources[0].warnings).toEqual(['Port "99999 nope" is not a number between 1 and 65535.']);

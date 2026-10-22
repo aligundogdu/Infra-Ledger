@@ -29,7 +29,7 @@ Everything is plain Markdown. Remove the plugin and your notes still read fine.
 - **Shared credentials.** Define a credential once and reference it from other resources with `ref`.
 - **Quick search.** Type `prod pg deploy` and copy the secret, the username or `ssh -p 22 deploy@10.0.0.4`. Every ip, host, port and label is searchable.
 - **Spaces.** Keep personal and work resources in separate folders. New resources go where you pick, `@work` in search shows one space only.
-- **Several addresses and ports.** Public, private and Tailscale ips on one server; pick which one the SSH command uses.
+- **Network details.** Several public, private and VPN addresses per server with interface, MAC, gateway, VLAN and any field you add. Pick which address the SSH command uses.
 - **Clipboard that cleans up.** Copied secrets are cleared after 30 seconds (configurable).
 - **Desktop and mobile.** No Node APIs, works on iOS and Android.
 
@@ -40,21 +40,32 @@ A resource is a note with a `type` in its properties. Credentials live in a `cre
 ````markdown
 ---
 type: server          # server | database | cloud | service | other
-ip:                   # one value or a list, each with an optional label
-  - 192.168.1.10 lan
-  - 100.64.0.7 tailscale
 provider: proxmox
 env: home
 ssh_port: 22
-ports:
-  - 8006 proxmox
-  - 5432 postgres
 tags: [homelab]
 ---
 
 # HomeServer
 
 Anything you like goes here: setup notes, services, incidents.
+
+```network
+- ip: 85.10.20.30/26
+  scope: public           # public | private | vpn | other, guessed when left out
+  label: main
+  iface: eth0
+  gateway: 85.10.20.1
+- ip: 192.168.1.10
+  label: lan
+  vlan: 20
+  ethId: 2                # any field you add is kept, shown and searchable
+- ip: 100.64.0.7
+  label: tailscale
+- port: 5432
+  service: postgres
+  note: lan only
+```
 
 ```creds
 - id: homeserver-root
@@ -77,7 +88,9 @@ Anything you like goes here: setup notes, services, incidents.
 ```
 ````
 
-In reading view the block renders as a table with masked secrets and buttons to reveal, copy, change and view history. The note's addresses and ports show above it as chips you can click to copy.
+In reading view the `creds` block renders as a table with masked secrets and buttons to reveal, copy, change and view history. The `network` block renders grouped by Public, Private, VPN and Ports, with buttons to copy an address, copy an SSH command or add a new address or port from a form.
+
+A server with a single address can skip the block and use properties instead: `ip: 10.0.0.4`, `host: box.example.com`, `ports: [22 ssh, 443 https]`. Those show as chips above the credentials.
 
 Rules worth knowing:
 
@@ -92,6 +105,8 @@ Rules worth knowing:
 | Search | Find a resource or credential and copy from it |
 | New resource | Create a resource note from a template |
 | Add credential | Add a credential to the current note |
+| Add address | Add an ip or host to the current note's network block |
+| Add port | Add a port to the current note's network block |
 | Change password | Rotate a secret and keep the old one in history |
 | Show history | List previous secrets of a credential |
 

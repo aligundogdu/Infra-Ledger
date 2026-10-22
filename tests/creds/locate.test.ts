@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { findBlockWithId, findCredsBlocks, firstCredsBlockLine } from "../../src/creds/locate";
+import { blockOrdinalAtLine, findBlockWithId, findCredsBlocks, firstCredsBlockLine } from "../../src/creds/locate";
 
 describe("findCredsBlocks", () => {
   it("finds every creds block with exact offsets", () => {
@@ -52,5 +52,14 @@ describe("firstCredsBlockLine", () => {
     const note = "---\ntype: server\n---\n\n```yaml\na: 1\n```\n\n```creds\n- ref: x\n```\n```creds\n```\n";
     expect(firstCredsBlockLine(note)).toBe(8);
     expect(firstCredsBlockLine("no blocks")).toBeNull();
+  });
+});
+
+describe("blockOrdinalAtLine", () => {
+  it("counts blocks of the same language before a line", () => {
+    const note = "```network\n```\n\n```creds\n```\n\n```network\n- ip: 1.1.1.1\n```\n";
+    expect(blockOrdinalAtLine(note, "network", 0)).toBe(0);
+    expect(blockOrdinalAtLine(note, "network", 6)).toBe(1);
+    expect(blockOrdinalAtLine(note, "network", 3)).toBeNull();
   });
 });
