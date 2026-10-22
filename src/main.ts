@@ -1,4 +1,4 @@
-import { moment, Notice, Plugin, setIcon, setTooltip, TFile } from "obsidian";
+import { addIcon, moment, Notice, Plugin, setIcon, setTooltip, TFile } from "obsidian";
 import {
   addCredential,
   changeSecret,
@@ -15,9 +15,19 @@ import { ConfirmModal } from "./ui/confirm-modal";
 import { AddCredentialModal } from "./ui/credential-modal";
 import { CredentialPicker } from "./ui/credential-picker";
 import { HistoryModal } from "./ui/history-modal";
+import { NewResourceModal } from "./ui/new-resource";
 import { SearchModal } from "./ui/search-modal";
 import { ClipboardGuard } from "./util/clipboard";
 import type { Credential } from "./model";
+
+const RIBBON_ICON_ID = "infra-ledger";
+// brand/logo/ribbon-icon.svg scaled from 24 to Obsidian's 100 unit icon box.
+const RIBBON_ICON = `<g transform="scale(4.1667)" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M4 3v18"/>
+  <rect x="8" y="4" width="12" height="4" rx="1"/>
+  <rect x="8" y="10" width="12" height="4" rx="1" stroke-opacity="0.6"/>
+  <rect x="8" y="16" width="12" height="4" rx="1" stroke-opacity="0.35"/>
+</g>`;
 
 export default class InfraLedgerPlugin extends Plugin {
   override settings: InfraLedgerSettings = structuredClone(DEFAULT_SETTINGS);
@@ -35,6 +45,14 @@ export default class InfraLedgerPlugin extends Plugin {
       ctx.addChild(new CredsBlockView(el, this, source, ctx.sourcePath));
     });
 
+    addIcon(RIBBON_ICON_ID, RIBBON_ICON);
+    this.addRibbonIcon(RIBBON_ICON_ID, "Infra Ledger: Search", () => new SearchModal(this.app, this).open());
+
+    this.addCommand({
+      id: "new-resource",
+      name: "New resource",
+      callback: () => new NewResourceModal(this.app, this).open(),
+    });
     this.addCommand({
       id: "search",
       name: "Search",
