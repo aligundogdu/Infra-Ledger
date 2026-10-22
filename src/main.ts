@@ -1,4 +1,4 @@
-import { addIcon, moment, Notice, Plugin, setIcon, setTooltip, TFile, type WorkspaceLeaf } from "obsidian";
+import { addIcon, moment, Notice, Plugin, setIcon, setTooltip, TFile } from "obsidian";
 import {
   addCredential,
   changeSecret,
@@ -366,22 +366,12 @@ export default class InfraLedgerPlugin extends Plugin {
 
   private async openSideView(type: string): Promise<void> {
     const { workspace } = this.app;
-    const isOurs = (l: WorkspaceLeaf) => l.view instanceof (type === INVENTORY_VIEW ? InventoryView : ScanView);
-    // A tab restored from an earlier session or left over from a plugin reload can carry our view type
-    // with a dead or placeholder view inside; setViewState with the same type doesn't rebuild it.
-    // Keep a live one, close the rest, and open a fresh tab when none is live.
-    const existing = workspace.getLeavesOfType(type);
-    for (const l of existing) await (l as { loadIfDeferred?: () => Promise<void> }).loadIfDeferred?.();
-    let leaf = existing.find(isOurs);
-    for (const l of existing) if (l !== leaf) l.detach();
+    let leaf = workspace.getLeavesOfType(type)[0];
     if (!leaf) {
       leaf = workspace.getRightLeaf(false) ?? workspace.getLeaf(true);
       await leaf.setViewState({ type, active: true });
     }
     await workspace.revealLeaf(leaf);
-    if (!isOurs(leaf) || leaf.view.containerEl.querySelector(".view-content")?.childElementCount === 0) {
-      new Notice(`Infra Ledger: the ${type} tab opened empty (view "${leaf.view.getViewType()}", ${leaf.view.constructor.name}). Please report this.`, 15000);
-    }
   }
 
   async addRelatedBlock(file: TFile): Promise<void> {

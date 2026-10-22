@@ -166,7 +166,7 @@ export class InventoryView extends ItemView {
     const body = table.createEl("tbody");
     for (const r of rows) {
       const tr = body.createEl("tr", { cls: "infra-ledger-row is-clickable" });
-      tr.addEventListener("click", (e) => this.open(r.path, e));
+      tr.addEventListener("click", (e) => this.openNote(r.path, e));
       for (const col of COLUMNS) {
         const value = r[col.key];
         tr.createEl("td", { text: value === undefined ? "" : String(value), cls: col.numeric ? "is-numeric" : "" });
@@ -208,7 +208,7 @@ export class InventoryView extends ItemView {
       li.createSpan({ text: d.name });
       const meta = [d.deviceType, d.model, d.extra].filter(Boolean).join(" · ");
       if (meta) li.createSpan({ cls: "infra-ledger-meta", text: `  ${meta}` });
-      li.addEventListener("click", (e) => this.open(d.path, e));
+      li.addEventListener("click", (e) => this.openNote(d.path, e));
     }
   }
 
@@ -227,7 +227,7 @@ export class InventoryView extends ItemView {
       for (const w of items) {
         const li = list.createEl("li", { text: w.message, cls: w.path ? "is-clickable" : "" });
         const path = w.path;
-        if (path) li.addEventListener("click", (e) => this.open(path, e));
+        if (path) li.addEventListener("click", (e) => this.openNote(path, e));
       }
     }
   }
@@ -240,7 +240,7 @@ export class InventoryView extends ItemView {
     });
   }
 
-  private open(path: string, e: MouseEvent): void {
+  private openNote(path: string, e: MouseEvent): void {
     void this.app.workspace.openLinkText(path, "", e.ctrlKey || e.metaKey);
   }
 }

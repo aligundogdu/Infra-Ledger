@@ -1,6 +1,6 @@
 {
   "name": "infra-ledger",
-  "version": "0.7.4",
+  "version": "0.7.5",
   "description": "Track servers, databases and cloud accounts in your notes. Keep a history of every password change, search and copy credentials fast, optionally encrypt secrets.",
   "main": "main.js",
   "private": true,
