@@ -351,8 +351,39 @@ Karar (2026-10-22): adresler ve portlar Properties yerine notun altinda bir ` ``
 - Birim: ledger parse (ham okuma, zorunlu alanlar, bilinmeyen event), assign/return mutate (iki kayit sirasi, frontmatter tek satir degisimi, blok yoksa olusturma), link alanlari cozumleme, rehber tiplerinin aramada SSH aksiyonu olmamasi.
 - Manuel: cihaz notu, zimmet ve iade akisi, kisi notunun backlink'leri, zaman cizelgesi gorunumu.
 
-## 0.4.0: Envanter paneli (taslak)
+## 0.4.0: Envanter paneli
 
-- Yan panel: kaynak listesi, filtreler (tip, alan, ortam, saglayici, lokasyon, etiket, kisi).
-- Kisiye gore gorunum: kimde ne var.
-- Uyarilar: garantisi 30 gun icinde bitenler, uzun suredir degismeyen sifreler, cozulemeyen ref ve linkler, duplicate id'ler.
+Sag kenar cubugunda bir panel (`ItemView`). Komut "Open inventory" ve ribbon menusu ile acilir; masaustu ve mobilde calisir. Panel indeks degistikce kendini yeniler. Tum filtreleme, gruplama ve uyari hesaplari saf fonksiyonlardadir (`src/inventory/*`) ve birim testlidir.
+
+### Resources sekmesi
+
+- Tablo kolonlari: Name (nota link), Type, Space, Detail (cihazda `device_type`, digerlerinde `env`), Provider, Location, Holder, Addresses (sayi), Credentials (sayi).
+- Filtreler: serbest metin (aramayla ayni esleme, `@alan` dahil), Type, Space, Provider, Location, Holder acilir listeleri. Liste secenekleri indeksteki mevcut degerlerden olusur; "Any" varsayilandir.
+- Kolon basligina tiklamak siralar (artan/azalan). Varsayilan siralama: Name.
+- Satira tiklamak notu acar (Mod+tik yeni sekmede).
+
+### People sekmesi
+
+- Zimmetli cihazlar kisiye gore gruplanir: grup basliginda kisi adi (kisi notu varsa link) ve cihaz sayisi; altinda cihaz adi, `device_type`, `model`, `since` tarihi.
+- En altta "Not assigned" grubu: zimmetli olmayan ve emekli olmayan cihazlar.
+- Emekli (`retired`) cihazlar listelenmez.
+
+### Warnings sekmesi
+
+Her uyari tek satir: ne oldugu, hangi not, tiklayinca not acilir. Gruplar:
+
+- Warranty: `warranty_until` gecmis ("Warranty ended 2026-05-01") ya da N gun icinde bitiyor ("Warranty ends in 12 days"). N ayardan, varsayilan 30. Emekli cihazlar haric.
+- Password age: `updated` tarihi N gunden eski credential'lar ("root on HomeServer: changed 240 days ago"). N ayardan, varsayilan 180. `updated` olmayan credential'lar ayri bir satirda sayilir: "12 credentials have no change date yet".
+- Duplicate id, cozulemeyen ve belirsiz ref, sync kopyasi ipucu.
+- Blok sorunlari: YAML hatasi ve uyarilar (gecersiz port, eksik id vb.), not basina sayi ile.
+- Sekme basliginda toplam uyari sayisi gorunur. Uyari yoksa "Nothing to fix."
+
+### Ayarlar
+
+- `warrantyWarnDays` (varsayilan 30, 0 = kapali)
+- `passwordMaxAgeDays` (varsayilan 180, 0 = kapali)
+
+### Test (0.4.0)
+
+- Birim: filtreleme (her filtre, metin + `@alan`, birlikte), siralama, kisiye gore gruplama (link ve duz metin ayni kisi sayilmaz, emekliler haric, not assigned grubu), uyari hesaplari (garanti gecmis/yaklasan/sinir gunu/kapali, sifre yasi esigi/kapali/updated yok sayaci, duplicate, ref, sync kopyasi, blok sorunlari).
+- Manuel: panelin acilmasi, filtreler, siralama, sekmeler, tiklayinca not acilmasi, indeks degisince yenilenmesi, mobilde gorunum.
