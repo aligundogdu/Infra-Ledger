@@ -128,7 +128,9 @@ npm test         # unit tests
 npm run build    # type check and production build
 ```
 
-Link or copy the repo folder into `<vault>/.obsidian/plugins/infra-ledger/` to try it in a vault.
+`npm run vault` builds the plugin into `test-vault/`, a small vault with sample resources. Open it in Obsidian and follow [`docs/testing.md`](docs/testing.md).
+
+Releases: `npm version patch` updates `manifest.json` and `versions.json` and tags the commit. Pushing the tag runs the release workflow, which attaches `main.js`, `manifest.json` and `styles.css` to a GitHub release.
 
 Design notes live in [`docs/design.md`](docs/design.md), brand and copy rules in [`brand/brand.md`](brand/brand.md).
 

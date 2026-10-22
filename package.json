@@ -9,7 +9,9 @@
     "dev": "node esbuild.config.mjs",
     "build": "tsc --noEmit && node esbuild.config.mjs production",
     "lint": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "version": "node version-bump.mjs && git add manifest.json versions.json",
+    "vault": "npm run build && mkdir -p test-vault/.obsidian/plugins/infra-ledger && cp main.js manifest.json styles.css test-vault/.obsidian/plugins/infra-ledger/"
   },
   "author": "Ali Gündoğdu",
   "license": "MIT",
