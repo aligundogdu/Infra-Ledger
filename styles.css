@@ -272,3 +272,22 @@
   padding: var(--size-4-1) var(--size-4-2);
   border-bottom: 1px solid var(--background-modifier-border);
 }
+
+.infra-ledger-scan-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--size-4-2);
+  font-size: var(--font-ui-small);
+}
+.infra-ledger-hit-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.infra-ledger-hit.is-low {
+  opacity: 0.8;
+}
+.infra-ledger-hit .infra-ledger-mono {
+  word-break: break-all;
+}

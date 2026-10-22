@@ -10,6 +10,9 @@ export interface InfraLedgerSettings {
   revealSec: number;
   warrantyWarnDays: number;
   passwordMaxAgeDays: number;
+  scanUnlabeled: boolean;
+  /** SHA-256 fingerprints of scan findings the user chose to ignore. */
+  ignoredFindings: string[];
   generator: GeneratorOptions;
 }
 
@@ -19,6 +22,8 @@ export const DEFAULT_SETTINGS: InfraLedgerSettings = {
   revealSec: 10,
   warrantyWarnDays: 30,
   passwordMaxAgeDays: 180,
+  scanUnlabeled: false,
+  ignoredFindings: [],
   generator: { length: 24, symbols: true, excludeAmbiguous: true },
 };
 
@@ -125,6 +130,27 @@ export class InfraLedgerSettingTab extends PluginSettingTab {
         s.passwordMaxAgeDays = n;
         await this.plugin.saveSettings();
       }));
+
+    new Setting(containerEl).setName("Secret scan").setHeading();
+
+    new Setting(containerEl)
+      .setName("Include values without a label")
+      .setDesc("Also report lone random-looking lines in code blocks without a language. Finds more, with more false alarms.")
+      .addToggle((t) => t.setValue(s.scanUnlabeled).onChange(async (v) => {
+        s.scanUnlabeled = v;
+        await this.plugin.saveSettings();
+      }));
+
+    new Setting(containerEl)
+      .setName("Ignored findings")
+      .setDesc(`${s.ignoredFindings.length} hidden. Only a fingerprint of each line is stored, never the value.`)
+      .addButton((b) =>
+        b.setButtonText("Show all again").setDisabled(s.ignoredFindings.length === 0).onClick(async () => {
+          s.ignoredFindings = [];
+          await this.plugin.saveSettings();
+          this.display();
+        }),
+      );
 
     new Setting(containerEl).setName("Password generator").setHeading();
 

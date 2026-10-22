@@ -26,6 +26,7 @@ import { HistoryModal } from "./ui/history-modal";
 import { NewResourceModal } from "./ui/new-resource";
 import { SearchModal } from "./ui/search-modal";
 import { INVENTORY_VIEW, InventoryView } from "./ui/inventory-view";
+import { SCAN_VIEW, ScanView } from "./ui/scan-view";
 import { ClipboardGuard } from "./util/clipboard";
 import { migrateSpaces, type Space } from "./spaces";
 import type { Credential } from "./model";
@@ -83,6 +84,8 @@ export default class InfraLedgerPlugin extends Plugin {
     this.registerView(INVENTORY_VIEW, (leaf) => new InventoryView(leaf, this));
     this.addRibbonIcon("layout-list", "Infra Ledger: Inventory", () => void this.openInventory());
     this.addCommand({ id: "open-inventory", name: "Open inventory", callback: () => void this.openInventory() });
+    this.registerView(SCAN_VIEW, (leaf) => new ScanView(leaf, this));
+    this.addCommand({ id: "scan-secrets", name: "Scan vault for secrets", callback: () => void this.openScan() });
 
     this.addCommand({
       id: "new-resource",
@@ -161,6 +164,7 @@ export default class InfraLedgerPlugin extends Plugin {
 
   async loadSettings(): Promise<void> {
     const data = ((await this.loadData()) ?? {}) as Partial<InfraLedgerSettings> & { resourceFolder?: string };
+    data.ignoredFindings = Array.isArray(data.ignoredFindings) ? data.ignoredFindings : [];
     const { resourceFolder: _old, ...rest } = data;
     this.settings = {
       ...structuredClone(DEFAULT_SETTINGS),
@@ -271,11 +275,21 @@ export default class InfraLedgerPlugin extends Plugin {
   }
 
   async openInventory(): Promise<void> {
+    await this.openSideView(INVENTORY_VIEW);
+  }
+
+  async openScan(): Promise<void> {
+    const existing = this.app.workspace.getLeavesOfType(SCAN_VIEW)[0];
+    await this.openSideView(SCAN_VIEW);
+    if (existing?.view instanceof ScanView) await existing.view.scanAll();
+  }
+
+  private async openSideView(type: string): Promise<void> {
     const { workspace } = this.app;
-    let leaf = workspace.getLeavesOfType(INVENTORY_VIEW)[0];
+    let leaf = workspace.getLeavesOfType(type)[0];
     if (!leaf) {
       leaf = workspace.getRightLeaf(false) ?? workspace.getLeaf(true);
-      await leaf.setViewState({ type: INVENTORY_VIEW, active: true });
+      await leaf.setViewState({ type, active: true });
     }
     workspace.revealLeaf(leaf);
   }

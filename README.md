@@ -32,6 +32,7 @@ Everything is plain Markdown. Remove the plugin and your notes still read fine.
 - **Network details.** Several public, private and VPN addresses per server with interface, MAC, gateway, VLAN and any field you add. Pick which address the SSH command uses.
 - **Clipboard that cleans up.** Copied secrets are cleared after 30 seconds (configurable).
 - **Devices and assignments.** Hardware details, who has which device, and a log of assignments, returns, repairs and moves.
+- **Secret scan.** Finds passwords, connection strings, SQL logins, cloud keys and private keys scattered across your notes and moves them into resources one by one.
 - **Inventory panel.** One sortable table of everything with filters, a "who has what" list, and warnings for warranties running out, old passwords, duplicate ids, broken refs and block errors.
 - **Desktop and mobile.** No Node APIs, works on iOS and Android.
 
@@ -137,6 +138,7 @@ Rules worth knowing:
 | Search | Find a resource or credential and copy from it |
 | Open inventory | Side panel with Resources, People and Warnings |
 | Add related list | Add a `related` block to the current note |
+| Scan vault for secrets | List secrets outside creds blocks and import them into resources |
 | New resource | Create a resource note from a template |
 | Add credential | Add a credential to the current note |
 | Add address | Add an ip or host to the current note's network block |
@@ -158,6 +160,18 @@ In search:
 
 When a server has more than one address, <kbd>Cmd/Ctrl</kbd> <kbd>Enter</kbd> asks which one to use. Start the query with `@` and a space name (`@work prod`) to search one space. On mobile, tap a result to get the same actions as a menu.
 
+## Cleaning up old notes
+
+**Scan vault for secrets** reads every note (not the `creds`, `network`, `ledger` and `related` blocks) and lists what looks like a secret:
+
+- labelled values: `password: …`, `şifre = …`, a value on the line after `Administrator Password`
+- connection strings: `mysql://user:pass@host`, `MAILER_DSN=smtp://…`
+- SQL: `IDENTIFIED BY '…'`, `WITH PASSWORD = '…'`
+- AWS, GitHub, Stripe and Slack keys, private key blocks, `.env` lines like `DB_PASSWORD=…`
+- optionally, lone random-looking lines in plain code blocks
+
+Values stay masked until you reveal them. **Import** fills in label, user and kind from what it found, adds the credential to an existing or new resource and, if you keep the option on, replaces the secret in the old note with `see [[Resource]]`. **Ignore** hides a finding for good; only a SHA-256 fingerprint of the line is stored. The scan runs locally and changes nothing without your click.
+
 ## Security
 
 > Infra Ledger stores everything in your vault as plain Markdown. If your vault syncs to iCloud, Dropbox or Git, your credentials go with it. Optional encryption protects the `secret` fields with a master password. Hostnames, users and notes stay readable so you can search them.
@@ -170,7 +184,8 @@ Encryption is planned for v2. Until then, secrets are stored as plain text. Infr
 - **0.2** Spaces (personal and work folders), network block with addresses and ports.
 - **0.3** Devices, people and locations, assignment ledger.
 - **0.4** Inventory side panel: filters, who has what, warranty and password age warnings.
-- **Later** Optional encryption with a master password and a recovery key. A scanner that finds passwords scattered across your vault and imports them into resources.
+- **0.5** Secret scan and import.
+- **Later** Optional encryption with a master password and a recovery key.
 
 Out of scope: uptime and ping checks, network scanning, purchasing and depreciation.
 

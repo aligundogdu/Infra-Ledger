@@ -70,6 +70,16 @@ Open `test-vault/` as a vault in Obsidian (Open another vault → Open folder as
 - [ ] `Locations/Office 2F.md`: Laptop 07 and Office Printer under "Located here". `Infra/Apple.md`: Laptop 07 under "Provided here".
 - [ ] "Add related list" on a note without one adds the block at the end; running it again says it already has one.
 
+## Secret scan (0.5)
+
+- [ ] "Scan vault for secrets" opens the scan panel. `Notes/Old Server Notes.md` lists: Administrator (next line), Sa password (medium), smtp connection with user and host, SQL password with user report_ro, AWS access and secret key. The echo and fastcgi lines are not listed. Managed blocks in other notes are not listed.
+- [ ] Values are masked; the eye reveals one.
+- [ ] Import the SQL password into a new note "Legacy SQL" (type database): note is created in the last used space, credential has user report_ro, kind db; the old note now reads `WITH PASSWORD = 'see [[Legacy SQL]]'` and nothing else in it changed. The finding disappears from the panel.
+- [ ] Import the smtp password into an existing resource with "Replace in source" off: old note unchanged, credential added.
+- [ ] Ignore a finding: it disappears and stays gone after "Scan again". Settings → Secret scan shows 1 hidden; "Show all again" brings it back.
+- [ ] Settings → "Include values without a label" on: the two pasted values in the plain code block appear as low confidence.
+- [ ] Edit the old note so a finding moves, then Import it: the import is refused with "the block changed" and nothing is written.
+
 ## Mobile
 
 - [ ] Block renders and fits a phone screen (kind column hidden).

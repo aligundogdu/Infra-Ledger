@@ -39,8 +39,15 @@ export function findCredsBlocks(note: string): BlockLocation[] {
 
 /** Finds fenced code blocks of one language, skipping fences of other languages. */
 export function findBlocks(note: string, language: string): BlockLocation[] {
+  return findAllBlocks(note)
+    .filter((b) => b.language === language)
+    .map(({ language: _l, ...b }) => b);
+}
+
+/** Every closed fenced code block with its language ("" when none). */
+export function findAllBlocks(note: string): (BlockLocation & { language: string })[] {
   const lines = splitLines(note);
-  const blocks: BlockLocation[] = [];
+  const blocks: (BlockLocation & { language: string })[] = [];
   let i = 0;
   while (i < lines.length) {
     const open = FENCE.exec(lines[i].text);
@@ -62,17 +69,16 @@ export function findBlocks(note: string, language: string): BlockLocation[] {
       i++;
       continue;
     }
-    if (lang === language) {
-      const contentStart = lines[i].next;
-      const contentEnd = lines[close].start;
-      blocks.push({
-        start: lines[i].start,
-        end: lines[close].start + lines[close].text.length,
-        contentStart,
-        contentEnd,
-        content: note.slice(contentStart, contentEnd),
-      });
-    }
+    const contentStart = lines[i].next;
+    const contentEnd = lines[close].start;
+    blocks.push({
+      language: lang,
+      start: lines[i].start,
+      end: lines[close].start + lines[close].text.length,
+      contentStart,
+      contentEnd,
+      content: note.slice(contentStart, contentEnd),
+    });
     i = close + 1;
   }
   return blocks;
