@@ -427,3 +427,51 @@ Vault'ta daginik duran sifreleri bulup kaynaklara aktarmak icin. Tamamen yerel c
 
 - Birim: her kural icin pozitif ve negatif ornekler (yer tutucu, link, duzyazi), bloklarin disarida birakilmasi, cakisan bulgularin tekillestirilmesi, DSN/SQL kullanici cikarimi, maskeleme, kaynak satirda degistirme (yalnizca deger, kayma durumunda red).
 - Manuel: test vault'unda tarama, import (mevcut ve yeni kaynak), degistirme, ignore.
+
+## 0.6.0: Sifreleme (opsiyonel, geri alinabilir)
+
+Bu bolum eski "v2 Taslak / Sifreleme" bolumunun yerine gecer.
+
+### Anahtarlar
+
+- Veri anahtari (DEK): 32 rastgele bayt (`crypto.getRandomValues`), AES-256-GCM.
+- DEK iki kez sarilir (her biri AES-256-GCM, 12 bayt rastgele IV):
+  - Parola anahtari: ana paroladan PBKDF2-SHA256, 16 bayt rastgele salt, 600.000 iterasyon. Iterasyon sayisi kayitta tutulur, ileride arttirilabilir.
+  - Kurtarma anahtari: 32 rastgele bayt, kullaniciya base32 (Crockford alfabesi, 4'lu gruplar) olarak bir kez gosterilir. Hicbir yere yazilmaz.
+- Plugin verisinde (`data.json`) saklanan: `encryption: { version: 1, kdf: { iterations, salt }, byPassword: { iv, data }, byRecovery: { iv, data } }`. Hepsi base64. Parola, kurtarma anahtari ve acik DEK asla saklanmaz.
+- Yanlis parola ya da kurtarma anahtari GCM dogrulamasinda reddedilir; ayri bir dogrulayici tutulmaz.
+
+### Deger bicimi
+
+- `enc:v1:<iv-base64>:<sifreli-veri-base64>`; sifreli veri GCM etiketini icerir. AAD: `infra-ledger:v1`.
+- Sifrelenen alanlar: `secret` ve `history[].secret`. `user`, `note`, Properties ve `network` blogu acik kalir (aranabilsin diye). Bu sinir README ve ayarlarda yazar.
+- Deger `enc:v1:` ile baslamiyorsa acik metindir. Ayni blokta acik ve sifreli degerler bir arada bulunabilir.
+
+### Oturum
+
+- Kilit acikken DEK yalnizca bellekte durur. Otomatik kilit: son islemden N dakika sonra (ayar, varsayilan 15, 0 = Obsidian kapanana kadar). "Lock" komutu hemen kilitler.
+- Kilitliyken sifreli degerler maskeli ve kilit isaretli gorunur. Goster, kopyala, sifre degistir, credential ekle ve import islemleri once kilit acma penceresini acar.
+- Kilit acma penceresi: ana parola; "Use recovery key" ile kurtarma anahtari. Kurtarma anahtariyla acilinca yeni ana parola belirlemek zorunludur.
+
+### Yazma
+
+- Sifreleme aktifken plugin'in yazdigi her yeni secret (sifre degistirme, credential ekleme, import) sifreli yazilir. Sifre degisiminde eski deger oldugu gibi (acik ya da sifreli) gecmise tasinir.
+- "Encrypt all": tum notlardaki acik `secret` ve gecmis degerlerini sifreler. "Decrypt all": tersini yapar. Her not tek `vault.process` ile yazilir; sifreleme asenkron oldugu icin degerler once hesaplanir, yazim aninda not degismisse o not atlanir ve raporlanir. Yalnizca ilgili `creds` bloklari degisir; notun geri kalani byte byte ayni kalir.
+- Sonuc raporu: kac not, kac deger, atlanan notlar.
+
+### Kurulum ve yonetim (Ayarlar)
+
+- Set up encryption: parola + tekrar (en az 12 karakter) -> kurtarma anahtari gosterilir, "I saved the recovery key" onayi olmadan devam edilmez -> "Encrypt all now?" sorulur.
+- Change password: kilit acik olmali; DEK yeni parola anahtariyla yeniden sarilir. Kurtarma anahtari degismez.
+- New recovery key: kilit acik olmali; yeni kurtarma anahtari uretilir ve gosterilir, eskisi gecersiz olur.
+- Turn off encryption: vault'ta sifreli deger kaldiysa sayisini soyleyip reddeder ("Decrypt all first"). Hic kalmadiysa anahtar kaydini siler.
+- Durum satiri: "Encryption on, locked" / "on, unlocked" / "off", ve vault'taki acik ve sifreli secret sayilari.
+
+### Pluginsiz cozme
+
+- `scripts/decrypt.mjs`: Node 18+ ile calisan, bagimsiz bir script. `node scripts/decrypt.mjs <data.json> <dosya-ya-da-deger>` parolayi (ya da `--recovery`) terminalden sorar, verilen notun ya da tek degerin acik halini yazar. Format `docs/encryption.md` icinde belgelenir.
+
+### Test (0.6.0)
+
+- Birim: kurulum -> parolayla ve kurtarma anahtariyla acma, yanlis parola/anahtar reddi, parola degistirme sonrasi eski parolanin reddi, yeni kurtarma anahtari sonrasi eskisinin reddi, sifrele/coz gidis-donus (Turkce karakter, bos olmayan uzun deger), kurcalanmis degerin reddi, `enc:v1` bicim ayristirma, base32 gidis-donus ve bosluk/tire toleransi, blok donusumu (sadece secret ve history secret degisir, digerleri ve blok disi byte byte ayni, ref satirina dokunulmaz, karisik acik/sifreli), decrypt script'inin plugin formatini cozmesi.
+- Manuel: kurulum, otomatik kilit, kilitliyken goster/kopyala, encrypt all / decrypt all raporu, kurtarma akisi, turn off reddi, mobilde kilit acma.
