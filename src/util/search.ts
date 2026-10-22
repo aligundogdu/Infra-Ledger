@@ -94,7 +94,7 @@ function credentialItem(ic: IndexedCredential, resource: Resource | null, path: 
   };
 }
 
-function resourceTerms(r: Resource): string[] {
+export function resourceTerms(r: Resource): string[] {
   const addresses = r.addresses.flatMap((a) => [
     a.value, a.label, a.scope, a.iface, a.mac, a.gateway, a.vlan, a.note, ...Object.values(a.extra),
   ]);
@@ -120,7 +120,7 @@ function describeResource(r: Resource | null): (string | undefined)[] {
   return [r.type, r.env, r.addresses[0]?.value];
 }
 
-function normalize(text: string): string {
+export function normalize(text: string): string {
   return text
     .toLocaleLowerCase("en")
     .replace(/ı/g, "i")
