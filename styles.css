@@ -291,3 +291,28 @@
 .infra-ledger-hit .infra-ledger-mono {
   word-break: break-all;
 }
+
+.infra-ledger-lock {
+  display: inline-flex;
+  vertical-align: middle;
+  margin-right: var(--size-2-2);
+  color: var(--text-muted);
+}
+.infra-ledger-lock svg {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+}
+.infra-ledger-recovery-key {
+  font-family: var(--font-monospace);
+  font-size: var(--font-ui-medium);
+  padding: var(--size-4-3);
+  background: var(--background-secondary);
+  border-radius: var(--radius-s);
+  white-space: pre-wrap;
+  word-break: break-all;
+  user-select: all;
+}
+.infra-ledger-modal-error {
+  color: var(--text-error);
+  font-size: var(--font-ui-small);
+}

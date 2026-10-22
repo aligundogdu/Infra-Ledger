@@ -1,11 +1,12 @@
 import { App, Modal, setIcon, setTooltip } from "obsidian";
 import { ConfirmModal } from "./confirm-modal";
+import { isEncrypted } from "../crypto/keys";
 import type InfraLedgerPlugin from "../main";
 
 const MASK = "••••••••••";
 
 export class HistoryModal extends Modal {
-  private revealed = new Set<number>();
+  private revealed = new Map<number, string>();
   private unsubscribe: (() => void) | null = null;
 
   constructor(
@@ -55,12 +56,19 @@ export class HistoryModal extends Modal {
       row.createEl("td", { cls: "infra-ledger-meta", text: h.until || "unknown" });
       row.createEl("td", { cls: "infra-ledger-note", text: h.reason ?? "" });
       const secretCell = row.createEl("td", { cls: "infra-ledger-secret" });
-      const shown = this.revealed.has(i);
-      secretCell.createSpan({ cls: "infra-ledger-mono", text: shown ? h.secret : MASK });
+      if (isEncrypted(h.secret) && !this.plugin.encryption.unlocked()) this.revealed.delete(i);
+      const shown = this.revealed.get(i);
+      if (isEncrypted(h.secret) && shown === undefined) setIcon(secretCell.createSpan({ cls: "infra-ledger-lock" }), "lock");
+      secretCell.createSpan({ cls: "infra-ledger-mono", text: shown ?? MASK });
       const actions = row.createEl("td", { cls: "infra-ledger-actions" });
-      this.button(secretCell, shown ? "eye-off" : "eye", shown ? "Hide" : "Show", () => {
-        if (shown) this.revealed.delete(i);
-        else this.revealed.add(i);
+      this.button(secretCell, shown !== undefined ? "eye-off" : "eye", shown !== undefined ? "Hide" : "Show", async () => {
+        if (shown !== undefined) {
+          this.revealed.delete(i);
+        } else {
+          const plain = await this.plugin.encryption.reveal(h.secret);
+          if (plain === null) return;
+          this.revealed.set(i, plain);
+        }
         this.render();
       });
       this.button(actions, "copy", "Copy password", () => void this.plugin.copySecret(h.secret));

@@ -1,5 +1,6 @@
 import { App, Modal, Setting, TextComponent } from "obsidian";
 import { generatePassword } from "../util/generator";
+import { isEncrypted } from "../crypto/keys";
 import type { Credential } from "../model";
 import type InfraLedgerPlugin from "../main";
 
@@ -77,7 +78,7 @@ export class ChangePasswordModal extends Modal {
       this.plugin.notify("Enter a new password or press Generate.");
       return;
     }
-    if (this.secret === this.cred.secret) {
+    if (this.secret === this.cred.secret && !isEncrypted(this.cred.secret)) {
       this.plugin.notify("The new password is the same as the current one.");
       return;
     }

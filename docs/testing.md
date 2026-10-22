@@ -80,8 +80,23 @@ Open `test-vault/` as a vault in Obsidian (Open another vault → Open folder as
 - [ ] Settings → "Include values without a label" on: the two pasted values in the plain code block appear as low confidence.
 - [ ] Edit the old note so a finding moves, then Import it: the import is refused with "the block changed" and nothing is written.
 
+## Encryption (0.6)
+
+- [ ] Settings → Encryption shows "Off" and the count of plain secrets.
+- [ ] Set up: a password shorter than 12 characters or two different passwords are refused. The recovery key shows once; Done stays disabled until "I saved the recovery key" is on; Esc doesn't lose it.
+- [ ] Encrypt all: Notice reports values and notes. Notes show `enc:v1:` for secrets and history in source mode; nothing else changed (check with git diff in the test vault). Broken blocks (Scratch.md) are reported as skipped.
+- [ ] Rows show a lock icon. Reveal and copy work while unlocked.
+- [ ] Lock command: revealed values hide, lock icons say locked. Reveal or copy asks for the password; a wrong password shows "Wrong password." and stays open.
+- [ ] Unlock with the recovery key: asks for a new master password afterwards; the old password no longer works.
+- [ ] Change password on a credential while encrypted: the new value is written encrypted, the old one moves to history encrypted.
+- [ ] Add credential and scan Import while encrypted: secrets are written encrypted.
+- [ ] Auto-lock: set 1 minute, wait, values lock.
+- [ ] Turn off while values are encrypted is refused with the count. Decrypt all, then Turn off works.
+- [ ] `node scripts/decrypt.mjs test-vault/.obsidian/plugins/infra-ledger/data.json "test-vault/Infra/HomeServer.md"` prints the note with plain secrets after the master password.
+
 ## Mobile
 
 - [ ] Block renders and fits a phone screen (kind column hidden).
 - [ ] Copy works; clipboard is emptied after the delay.
 - [ ] Search: tapping a result opens the action menu, with one SSH row per address.
+- [ ] Encryption: unlock with the master password on the phone (PBKDF2 takes a moment), reveal and copy work.

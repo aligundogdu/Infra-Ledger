@@ -29,6 +29,7 @@ import { INVENTORY_VIEW, InventoryView } from "./ui/inventory-view";
 import { SCAN_VIEW, ScanView } from "./ui/scan-view";
 import { ClipboardGuard } from "./util/clipboard";
 import { migrateSpaces, type Space } from "./spaces";
+import { EncryptionController } from "./crypto/controller";
 import type { Credential } from "./model";
 
 const RIBBON_ICON_ID = "infra-ledger";
@@ -43,6 +44,7 @@ const RIBBON_ICON = `<g transform="scale(4.1667)" fill="none" stroke="currentCol
 export default class InfraLedgerPlugin extends Plugin {
   override settings: InfraLedgerSettings = structuredClone(DEFAULT_SETTINGS);
   index!: LedgerIndex;
+  encryption!: EncryptionController;
   private clipboard!: ClipboardGuard;
   private shownSyncHints = new Set<string>();
 
@@ -50,6 +52,20 @@ export default class InfraLedgerPlugin extends Plugin {
     await this.loadSettings();
     this.index = new LedgerIndex(this.app, () => this.settings.spaces);
     this.clipboard = new ClipboardGuard(navigator.clipboard);
+    this.encryption = new EncryptionController(this);
+
+    this.addCommand({ id: "lock", name: "Lock", callback: () => this.encryption.guard.lock() });
+    this.addCommand({
+      id: "unlock",
+      name: "Unlock",
+      checkCallback: (checking) => {
+        if (!this.encryption.enabled() || this.encryption.unlocked()) return false;
+        if (!checking) void this.encryption.session();
+        return true;
+      },
+    });
+    this.addCommand({ id: "encrypt-all", name: "Encrypt all secrets", callback: () => void this.runBulk("encrypt") });
+    this.addCommand({ id: "decrypt-all", name: "Decrypt all secrets", callback: () => void this.runBulk("decrypt") });
 
     this.addSettingTab(new InfraLedgerSettingTab(this.app, this));
     this.registerMarkdownCodeBlockProcessor("creds", (source, el, ctx) => {
@@ -160,10 +176,26 @@ export default class InfraLedgerPlugin extends Plugin {
   override onunload(): void {
     this.index?.dispose();
     this.clipboard?.dispose();
+    this.encryption?.guard.lock();
+  }
+
+  async runBulk(kind: "encrypt" | "decrypt"): Promise<void> {
+    if (!this.encryption.enabled()) {
+      this.notify('Encryption is off. Set it up in Settings → Infra Ledger first.');
+      return;
+    }
+    const report = kind === "encrypt" ? await this.encryption.encryptAll() : await this.encryption.decryptAll();
+    if (!report) return;
+    const verb = kind === "encrypt" ? "Encrypted" : "Decrypted";
+    const parts = [`${verb} ${report.values} values in ${report.notes} notes.`];
+    if (report.skipped.length > 0) parts.push(`Skipped ${report.skipped.length} that changed or have a broken block: ${report.skipped.join(", ")}. Run it again.`);
+    if (report.failed > 0) parts.push(`${report.failed} values couldn't be decrypted with this key.`);
+    new Notice(parts.join(" "), report.skipped.length > 0 || report.failed > 0 ? 15000 : 5000);
   }
 
   async loadSettings(): Promise<void> {
     const data = ((await this.loadData()) ?? {}) as Partial<InfraLedgerSettings> & { resourceFolder?: string };
+    if (data.encryption?.version !== 1) delete data.encryption;
     data.ignoredFindings = Array.isArray(data.ignoredFindings) ? data.ignoredFindings : [];
     const { resourceFolder: _old, ...rest } = data;
     this.settings = {
@@ -189,8 +221,10 @@ export default class InfraLedgerPlugin extends Plugin {
   }
 
   async copySecret(secret: string): Promise<void> {
+    const plain = await this.encryption.reveal(secret);
+    if (plain === null) return;
     const sec = this.settings.clipboardClearSec;
-    await this.clipboard.copy(secret, sec, true);
+    await this.clipboard.copy(plain, sec, true);
     new Notice(sec > 0 ? `Password copied. Clipboard clears in ${sec} s.` : "Password copied.");
   }
 
@@ -248,6 +282,11 @@ export default class InfraLedgerPlugin extends Plugin {
   }
 
   async addCredential(path: string, cred: NewCredential): Promise<boolean> {
+    if (cred.secret) {
+      const sealed = await this.encryption.seal(cred.secret);
+      if (sealed === null) return false;
+      cred = { ...cred, secret: sealed };
+    }
     const ok = await this.applyMutation(path, (note) => addCredential(note, cred));
     if (ok) this.notify(`Added ${cred.label}.`);
     return ok;
@@ -263,7 +302,9 @@ export default class InfraLedgerPlugin extends Plugin {
   }
 
   async changeSecret(path: string, id: string, secret: string, reason?: string): Promise<boolean> {
-    const ok = await this.applyMutation(path, (note) => changeSecret(note, id, secret, today(), reason));
+    const sealed = await this.encryption.seal(secret);
+    if (sealed === null) return false;
+    const ok = await this.applyMutation(path, (note) => changeSecret(note, id, sealed, today(), reason));
     if (ok) this.notify("Password changed. Previous value moved to history.");
     return ok;
   }

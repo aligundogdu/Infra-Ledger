@@ -1,6 +1,7 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import type { GeneratorOptions } from "./util/generator";
 import { cleanFolder, DEFAULT_SPACES, type Space } from "./spaces";
+import type { KeyRecord } from "./crypto/keys";
 import type InfraLedgerPlugin from "./main";
 
 export interface InfraLedgerSettings {
@@ -14,6 +15,9 @@ export interface InfraLedgerSettings {
   /** SHA-256 fingerprints of scan findings the user chose to ignore. */
   ignoredFindings: string[];
   generator: GeneratorOptions;
+  /** Wrapped data key; present when encryption is set up. */
+  encryption?: KeyRecord;
+  autoLockMinutes: number;
 }
 
 export const DEFAULT_SETTINGS: InfraLedgerSettings = {
@@ -24,6 +28,7 @@ export const DEFAULT_SETTINGS: InfraLedgerSettings = {
   passwordMaxAgeDays: 180,
   scanUnlabeled: false,
   ignoredFindings: [],
+  autoLockMinutes: 15,
   generator: { length: 24, symbols: true, excludeAmbiguous: true },
 };
 
@@ -33,6 +38,75 @@ export const SECURITY_STATEMENT =
   "Hostnames, users and notes stay readable so you can search them.";
 
 export class InfraLedgerSettingTab extends PluginSettingTab {
+  private encryptionSection(containerEl: HTMLElement): void {
+    const enc = this.plugin.encryption;
+    const s = this.plugin.settings;
+    new Setting(containerEl).setName("Encryption").setHeading();
+    const { plain, encrypted } = enc.counts();
+    const state = !enc.enabled() ? "Off" : enc.unlocked() ? "On, unlocked" : "On, locked";
+    containerEl.createEl("p", {
+      cls: `infra-ledger-settings-statement${enc.enabled() ? "" : " mod-warning"}`,
+      text: `${state}. ${encrypted} encrypted and ${plain} plain secrets in the vault.` +
+        (enc.enabled() ? "" : " Secrets are stored as plain text."),
+    });
+
+    if (!enc.enabled()) {
+      new Setting(containerEl)
+        .setName("Set up encryption")
+        .setDesc("Encrypts secret fields with a master password. You get a recovery key to keep somewhere safe.")
+        .addButton((b) => b.setButtonText("Set up").setCta().onClick(async () => {
+          await enc.setUp();
+          this.display();
+        }));
+      return;
+    }
+
+    new Setting(containerEl)
+      .setName("Encrypt or decrypt everything")
+      .setDesc("Rewrites the secret fields in every note. Only those fields change.")
+      .addButton((b) => b.setButtonText("Encrypt all").onClick(async () => {
+        await this.plugin.runBulk("encrypt");
+        this.display();
+      }))
+      .addButton((b) => b.setButtonText("Decrypt all").onClick(async () => {
+        await this.plugin.runBulk("decrypt");
+        this.display();
+      }));
+
+    new Setting(containerEl)
+      .setName("Lock after (minutes)")
+      .setDesc("Forget the key after this long without use. 0 keeps it until Obsidian closes.")
+      .addText((t) => numberInput(t, s.autoLockMinutes, 0, 1440, async (n) => {
+        s.autoLockMinutes = n;
+        await this.plugin.saveSettings();
+        enc.guard.touch();
+      }));
+
+    new Setting(containerEl)
+      .setName("Keys")
+      .addButton((b) => b.setButtonText(enc.unlocked() ? "Lock now" : "Unlock").onClick(async () => {
+        if (enc.unlocked()) enc.guard.lock();
+        else await enc.session();
+        this.display();
+      }))
+      .addButton((b) => b.setButtonText("Change password").onClick(async () => {
+        await enc.changePassword();
+        this.display();
+      }))
+      .addButton((b) => b.setButtonText("New recovery key").onClick(async () => {
+        await enc.replaceRecoveryKey();
+        this.display();
+      }));
+
+    new Setting(containerEl)
+      .setName("Turn off encryption")
+      .setDesc("Only possible after Decrypt all.")
+      .addButton((b) => b.setButtonText("Turn off").setWarning().onClick(async () => {
+        await enc.turnOff();
+        this.display();
+      }));
+  }
+
   constructor(app: App, private readonly plugin: InfraLedgerPlugin) {
     super(app, plugin);
   }
@@ -43,10 +117,7 @@ export class InfraLedgerSettingTab extends PluginSettingTab {
     containerEl.empty();
 
     containerEl.createEl("p", { text: SECURITY_STATEMENT, cls: "infra-ledger-settings-statement" });
-    containerEl.createEl("p", {
-      text: "Encryption is not available yet. Secrets are stored as plain text.",
-      cls: "infra-ledger-settings-statement mod-warning",
-    });
+    this.encryptionSection(containerEl);
 
     new Setting(containerEl)
       .setName("Spaces")

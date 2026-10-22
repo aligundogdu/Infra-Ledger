@@ -31,6 +31,7 @@ Everything is plain Markdown. Remove the plugin and your notes still read fine.
 - **Spaces.** Keep personal and work resources in separate folders. New resources go where you pick, `@work` in search shows one space only.
 - **Network details.** Several public, private and VPN addresses per server with interface, MAC, gateway, VLAN and any field you add. Pick which address the SSH command uses.
 - **Clipboard that cleans up.** Copied secrets are cleared after 30 seconds (configurable).
+- **Optional encryption.** Secret fields encrypted with a master password, a recovery key for emergencies, and a script that decrypts without the plugin.
 - **Devices and assignments.** Hardware details, who has which device, and a log of assignments, returns, repairs and moves.
 - **Secret scan.** Finds passwords, connection strings, SQL logins, cloud keys and private keys scattered across your notes and moves them into resources one by one.
 - **Inventory panel.** One sortable table of everything with filters, a "who has what" list, and warnings for warranties running out, old passwords, duplicate ids, broken refs and block errors.
@@ -139,6 +140,8 @@ Rules worth knowing:
 | Open inventory | Side panel with Resources, People and Warnings |
 | Add related list | Add a `related` block to the current note |
 | Scan vault for secrets | List secrets outside creds blocks and import them into resources |
+| Lock / Unlock | Forget or load the encryption key |
+| Encrypt all secrets / Decrypt all secrets | Convert every secret field in the vault |
 | New resource | Create a resource note from a template |
 | Add credential | Add a credential to the current note |
 | Add address | Add an ip or host to the current note's network block |
@@ -176,7 +179,15 @@ Values stay masked until you reveal them. **Import** fills in label, user and ki
 
 > Infra Ledger stores everything in your vault as plain Markdown. If your vault syncs to iCloud, Dropbox or Git, your credentials go with it. Optional encryption protects the `secret` fields with a master password. Hostnames, users and notes stay readable so you can search them.
 
-Encryption is planned for v2. Until then, secrets are stored as plain text. Infra Ledger is not a password manager: there is no browser autofill, no server and no team sharing.
+Encryption is off until you set it up in Settings → Infra Ledger. Then:
+
+- A random data key encrypts each `secret` and every old value in `history` with AES-256-GCM. Values look like `enc:v1:…` in the note.
+- The data key is stored twice in the plugin's `data.json`: wrapped by your master password (PBKDF2, 600,000 rounds) and by a recovery key you get once and keep somewhere else.
+- While unlocked the key lives in memory only; it is dropped after 15 minutes without use (configurable) or with the **Lock** command.
+- **Encrypt all secrets** and **Decrypt all secrets** convert the whole vault and change only those fields. Turning encryption off requires decrypting first, so nothing gets stranded.
+- `scripts/decrypt.mjs` decrypts a value or a whole note with Node and no plugin. The format is in [`docs/encryption.md`](docs/encryption.md).
+
+Infra Ledger is not a password manager: there is no browser autofill, no server and no team sharing.
 
 ## Roadmap
 
@@ -185,7 +196,7 @@ Encryption is planned for v2. Until then, secrets are stored as plain text. Infr
 - **0.3** Devices, people and locations, assignment ledger.
 - **0.4** Inventory side panel: filters, who has what, warranty and password age warnings.
 - **0.5** Secret scan and import.
-- **Later** Optional encryption with a master password and a recovery key.
+- **0.6** Optional encryption with a master password and a recovery key.
 
 Out of scope: uptime and ping checks, network scanning, purchasing and depreciation.
 

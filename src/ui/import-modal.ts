@@ -137,12 +137,14 @@ export class ImportSecretModal extends Modal {
       if (!replaced) return;
     }
 
+    const secret = await this.plugin.encryption.seal(this.finding.value);
+    if (secret === null) return;
     const added = await this.plugin.applyMutation(file.path, (note) =>
       addCredential(note, {
         id: this.id,
         label: this.label,
         kind: this.kind,
-        secret: this.finding.value,
+        secret,
         ...(this.user && { user: this.user }),
       }),
     );

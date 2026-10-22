@@ -1,5 +1,6 @@
 import { MarkdownRenderChild, setIcon, setTooltip } from "obsidian";
 import { parseCredsBlock } from "../creds/parse";
+import { isEncrypted } from "../crypto/keys";
 import type { Credential, CredRef } from "../model";
 import type { IndexedCredential, LedgerSnapshot } from "../index/core";
 import type InfraLedgerPlugin from "../main";
@@ -8,7 +9,8 @@ const MASK = "••••••••••";
 
 /** Renders one ```creds block as a table and re-renders when the index changes. */
 export class CredsBlockView extends MarkdownRenderChild {
-  private revealed = new Set<string>();
+  /** Revealed plaintexts by row key; dropped when the vault locks. */
+  private revealed = new Map<string, string>();
   private revealTimers = new Map<string, number>();
 
   constructor(
@@ -169,9 +171,18 @@ export class CredsBlockView extends MarkdownRenderChild {
   private renderSecret(row: HTMLElement, key: string, secret?: string): void {
     const cell = row.createEl("td", { cls: "infra-ledger-secret" });
     if (secret === undefined) return;
-    const shown = this.revealed.has(key);
-    cell.createSpan({ cls: "infra-ledger-mono", text: shown ? secret : MASK });
-    this.button(cell, shown ? "eye-off" : "eye", shown ? "Hide" : "Show", () => this.toggleReveal(key));
+    const encrypted = isEncrypted(secret);
+    if (encrypted && !this.plugin.encryption.unlocked()) this.revealed.delete(key);
+    const shown = this.revealed.get(key);
+    if (encrypted && shown === undefined) {
+      const lock = cell.createSpan({ cls: "infra-ledger-lock" });
+      setIcon(lock, "lock");
+      setTooltip(lock, this.plugin.encryption.unlocked() ? "Encrypted" : "Encrypted, locked");
+    }
+    cell.createSpan({ cls: "infra-ledger-mono", text: shown ?? MASK });
+    this.button(cell, shown !== undefined ? "eye-off" : "eye", shown !== undefined ? "Hide" : "Show", () =>
+      void this.toggleReveal(key, secret),
+    );
   }
 
   private renderCopyButtons(cell: HTMLElement, cred: Credential): void {
@@ -179,14 +190,16 @@ export class CredsBlockView extends MarkdownRenderChild {
     if (cred.secret !== undefined) this.button(cell, "copy", "Copy secret", () => void this.plugin.copySecret(cred.secret!));
   }
 
-  private toggleReveal(key: string): void {
+  private async toggleReveal(key: string, secret: string): Promise<void> {
     const old = this.revealTimers.get(key);
     if (old !== undefined) window.clearTimeout(old);
     this.revealTimers.delete(key);
     if (this.revealed.has(key)) {
       this.revealed.delete(key);
     } else {
-      this.revealed.add(key);
+      const plain = await this.plugin.encryption.reveal(secret);
+      if (plain === null) return;
+      this.revealed.set(key, plain);
       this.revealTimers.set(
         key,
         window.setTimeout(() => {
