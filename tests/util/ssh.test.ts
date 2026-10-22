@@ -8,7 +8,18 @@ describe("sshCommand", () => {
   });
 });
 
+describe("sshCommand with a key", () => {
+  it("adds -i and quotes paths with spaces", () => {
+    expect(sshCommand("10.0.0.4", 22, "deploy", "~/.ssh/id_ed25519")).toBe("ssh -p 22 -i ~/.ssh/id_ed25519 deploy@10.0.0.4");
+    expect(sshCommand("10.0.0.4", 22, "deploy", "~/My Keys/id")).toBe('ssh -p 22 -i "~/My Keys/id" deploy@10.0.0.4');
+  });
+});
+
 describe("sshTargets", () => {
+  it("passes the key to every command", () => {
+    const a = { value: "10.0.0.4", isHost: false, scope: "private" as const, source: "network" as const, extra: {} };
+    expect(sshTargets({ addresses: [a], sshPort: 2222 }, "deploy", "~/k")[0].command).toBe("ssh -p 2222 -i ~/k deploy@10.0.0.4");
+  });
   it("keeps the resource's address order, labels and scopes", () => {
     const a = (value: string, scope: "public" | "private", label?: string) => ({
       value, isHost: false, scope, source: "network" as const, extra: {}, ...(label && { label }),

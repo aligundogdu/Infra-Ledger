@@ -47,6 +47,12 @@ Proxmox host in the closet. Free text stays untouched by the plugin.
     - secret: "old-password"
       until: 2026-03-10
       reason: rotation
+- id: homeserver-deploy
+  label: deploy
+  user: deploy
+  auth: key
+  key_path: ~/.ssh/homeserver_ed25519
+  kind: ssh
 - id: homeserver-postgres
   label: postgres app
   user: appuser

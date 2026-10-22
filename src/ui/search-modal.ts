@@ -2,6 +2,7 @@ import { App, Platform, SuggestModal } from "obsidian";
 import { buildSearchItems, matchItems, parseQuery, type SearchItem } from "../util/search";
 import { sshTargets, type SshTarget } from "../util/ssh";
 import { isDirectoryType } from "../index/core";
+import { SshPicker } from "./ssh-picker";
 import type InfraLedgerPlugin from "../main";
 
 type Action =
@@ -99,27 +100,6 @@ class ActionModal extends SuggestModal<Action> {
   }
 }
 
-class SshPicker extends SuggestModal<SshTarget> {
-  constructor(app: App, private readonly targets: SshTarget[], private readonly pick: (t: SshTarget) => void) {
-    super(app);
-    this.setPlaceholder("Pick an address");
-  }
-
-  override getSuggestions(query: string): SshTarget[] {
-    const q = query.toLowerCase().trim();
-    return this.targets.filter((t) => !q || `${t.label ?? ""} ${t.scope ?? ""} ${t.address}`.toLowerCase().includes(q));
-  }
-
-  override renderSuggestion(t: SshTarget, el: HTMLElement): void {
-    el.createDiv({ cls: "infra-ledger-suggestion-title", text: t.label ? `${t.label} · ${t.address}` : t.address });
-    el.createDiv({ cls: "infra-ledger-suggestion-meta", text: [t.scope, t.command].filter(Boolean).join(" · ") });
-  }
-
-  override onChooseSuggestion(t: SshTarget): void {
-    this.pick(t);
-  }
-}
-
 function actionLabel(a: Action): string {
   switch (a.kind) {
     case "secret":
@@ -135,7 +115,8 @@ function actionLabel(a: Action): string {
 
 function targetsOf(item: SearchItem): SshTarget[] {
   if (!item.resource || isDirectoryType(item.resource.type)) return [];
-  return sshTargets(item.resource, item.credential?.cred.user);
+  const cred = item.credential?.cred;
+  return sshTargets(item.resource, cred?.user, cred?.auth === "key" ? cred.keyPath : undefined);
 }
 
 async function run(plugin: InfraLedgerPlugin, item: SearchItem, action: Action): Promise<void> {
@@ -144,6 +125,7 @@ async function run(plugin: InfraLedgerPlugin, item: SearchItem, action: Action):
   switch (action.kind) {
     case "secret":
       if (cred?.secret !== undefined) await plugin.copySecret(cred.secret);
+      else if (cred?.auth === "key") plugin.notify(`${name} logs in with a key${cred.keyPath ? ` (${cred.keyPath})` : ""} and has no passphrase stored.`);
       else plugin.notify(`No password stored for ${name}.`);
       return;
     case "user":

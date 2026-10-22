@@ -88,6 +88,11 @@ Anything you like goes here: setup notes, services, incidents.
   user: appuser
   secret: "s3cret"
   kind: db
+- id: homeserver-deploy
+  label: deploy
+  user: deploy
+  auth: key                 # log in with a key instead of a password
+  key_path: ~/.ssh/homeserver_ed25519
 - ref: forge-shared-key     # defined in another resource
 ```
 ````
@@ -125,6 +130,8 @@ warranty_until: 2027-05-01
 Add an empty `related` block to a person, location or provider note and it lists everything that points there: the devices someone has now (with a Return button), what they had before, what sits at a location, what runs at a provider. New person and location notes come with it.
 
 **Assign** picks a person (person notes first, any name works), logs the previous holder as returned and updates `assigned_to`. **Return** and **Add event** work the same way. Because people, locations and providers can be notes, their backlinks list every device and server that points to them. `ledger` blocks work on any resource, so a server can log "moved to HEL1" or "RAM upgraded" too.
+
+Credentials with `auth: key` keep only the path of the private key; the key itself never goes into the note. `secret` then holds the key's passphrase, if it has one. Every SSH credential row has a **Copy SSH login** button that builds `ssh -p 22 -i ~/.ssh/homeserver_ed25519 deploy@85.10.20.30` from the note's addresses, and asks which address to use when there are several.
 
 Rules worth knowing:
 

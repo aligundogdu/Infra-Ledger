@@ -190,3 +190,16 @@ describe("deleteHistoryEntry", () => {
     expect(deleteHistoryEntry(NOTE, "home-root", 0).ok).toBe(false);
   });
 });
+
+describe("addCredential with a key", () => {
+  it("writes auth and key_path after user, with an optional passphrase", () => {
+    const after = ok(addCredential("```creds\n```\n", { id: "d", label: "deploy", user: "deploy", auth: "key", keyPath: "~/.ssh/id_ed25519", secret: "pp", kind: "ssh" }));
+    expect(after).toBe('```creds\n- id: d\n  label: deploy\n  user: deploy\n  auth: key\n  key_path: ~/.ssh/id_ed25519\n  secret: "pp"\n  kind: ssh\n```\n');
+    const bare = ok(addCredential("```creds\n```\n", { id: "e", label: "e", auth: "key", keyPath: "~/k" }));
+    expect(credsOf(bare)[0]).toMatchObject({ auth: "key", keyPath: "~/k" });
+    expect(bare).not.toContain("secret");
+  });
+  it("does not write auth for password credentials", () => {
+    expect(ok(addCredential("```creds\n```\n", { id: "f", label: "f", auth: "password", secret: "x" }))).not.toContain("auth");
+  });
+});

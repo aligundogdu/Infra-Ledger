@@ -13,6 +13,8 @@ export interface NewCredential {
   secret?: string;
   kind?: Kind;
   note?: string;
+  auth?: "password" | "key";
+  keyPath?: string;
 }
 
 
@@ -73,6 +75,10 @@ export function addCredential(note: string, cred: NewCredential): MutateResult {
   map.set("id", cred.id);
   map.set("label", cred.label);
   if (cred.user) map.set("user", cred.user);
+  if (cred.auth === "key") {
+    map.set("auth", "key");
+    if (cred.keyPath) map.set("key_path", cred.keyPath);
+  }
   if (cred.secret) map.set("secret", quoted(cred.secret));
   if (cred.kind) map.set("kind", cred.kind);
   if (cred.note) map.set("note", cred.note);

@@ -1,4 +1,4 @@
-import { App, Modal, Setting, TextComponent } from "obsidian";
+import { App, DropdownComponent, Modal, Setting, TextComponent } from "obsidian";
 import { KINDS, type Kind } from "../model";
 import { generatePassword } from "../util/generator";
 import { slugify, suggestId } from "../util/ids";
@@ -10,6 +10,8 @@ export class AddCredentialModal extends Modal {
   private secret = "";
   private kind: Kind = "other";
   private note = "";
+  private auth: "password" | "key" = "password";
+  private keyPath = "";
   private id = "";
   private idEdited = false;
 
@@ -52,7 +54,35 @@ export class AddCredentialModal extends Modal {
       submitOnEnter(t);
     });
 
-    new Setting(contentEl)
+    let keyRow!: Setting;
+    let secretRow!: Setting;
+    let kindDropdown: DropdownComponent | undefined;
+    new Setting(contentEl).setName("Sign in with").addDropdown((d) => {
+      d.addOption("password", "Password").addOption("key", "SSH key");
+      d.setValue(this.auth).onChange((v) => {
+        this.auth = v as "password" | "key";
+        keyRow.settingEl.toggle(this.auth === "key");
+        secretRow.setName(this.auth === "key" ? "Passphrase" : "Password");
+        secretRow.setDesc(this.auth === "key" ? "Optional. Only if the key has one." : "");
+        if (this.auth === "key" && this.kind === "other") {
+          this.kind = "ssh";
+          kindDropdown?.setValue("ssh");
+        }
+      });
+    });
+
+    keyRow = new Setting(contentEl)
+      .setName("Key file")
+      .setDesc("Where the private key is on this computer. The key itself is never stored in the note.")
+      .addText((t) => {
+        t.setPlaceholder("~/.ssh/id_ed25519");
+        t.inputEl.addClass("infra-ledger-mono");
+        t.onChange((v) => (this.keyPath = v.trim()));
+        submitOnEnter(t);
+      });
+    keyRow.settingEl.toggle(false);
+
+    secretRow = new Setting(contentEl)
       .setName("Password")
       .addText((t) => {
         secretInput = t;
@@ -77,6 +107,7 @@ export class AddCredentialModal extends Modal {
       );
 
     new Setting(contentEl).setName("Kind").addDropdown((d) => {
+      kindDropdown = d;
       for (const k of KINDS) d.addOption(k, k);
       d.setValue(this.kind).onChange((v) => (this.kind = v as Kind));
     });
@@ -126,6 +157,7 @@ export class AddCredentialModal extends Modal {
       id: this.id,
       label: this.label,
       kind: this.kind,
+      ...(this.auth === "key" && { auth: "key" as const, ...(this.keyPath && { keyPath: this.keyPath }) }),
       ...(this.user && { user: this.user }),
       ...(this.secret && { secret: this.secret }),
       ...(this.note && { note: this.note }),

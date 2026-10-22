@@ -11,6 +11,8 @@ tags: [deploy]
 - id: forge-shared-key
   label: deploy key
   user: forge
-  secret: "shared-deploy-secret"
-  kind: api-key
+  auth: key
+  key_path: ~/.ssh/forge_shared
+  secret: "key-passphrase"
+  kind: ssh
 ```

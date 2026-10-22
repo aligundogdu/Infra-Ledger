@@ -96,7 +96,8 @@ export class NetworkBlockView extends MarkdownRenderChild {
     this.button(actions, "copy", "Copy address", () => void this.plugin.copyText(a.value, `Copied ${a.value}.`));
     this.button(actions, "terminal", "Copy SSH command", () => {
       const r = this.plugin.index.snapshot.resources.find((res) => res.path === this.sourcePath);
-      const cmd = sshCommand(a.value, r?.sshPort ?? 22, this.plugin.sshUserFor(this.sourcePath));
+      const login = this.plugin.sshLoginFor(this.sourcePath);
+      const cmd = sshCommand(a.value, r?.sshPort ?? 22, login.user, login.keyPath);
       void this.plugin.copyText(cmd, `SSH command copied: ${cmd}`);
     });
     this.deleteButton(actions, a.index, a.value, a.label ?? a.value);

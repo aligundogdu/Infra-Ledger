@@ -4,7 +4,7 @@ import { readRawString } from "./raw-scalar";
 import { KINDS } from "../model";
 import type { BlockIssue, Credential, Entry, HistoryEntry, Kind, ParseResult } from "../model";
 
-const CORE_FIELDS = ["id", "label", "user", "secret", "kind", "note", "updated"] as const;
+const CORE_FIELDS = ["id", "label", "user", "secret", "kind", "note", "updated", "auth", "key_path"] as const;
 type CoreField = (typeof CORE_FIELDS)[number];
 
 export function parseCredsBlock(text: string): ParseResult {
@@ -54,6 +54,7 @@ export function parseCredsBlock(text: string): ParseResult {
       id: fields.id,
       label: fields.label,
       kind: toKind(fields.kind),
+      auth: fields.auth?.toLowerCase() === "key" ? "key" : "password",
       history: readHistory(item, text),
       index,
     };
@@ -61,6 +62,7 @@ export function parseCredsBlock(text: string): ParseResult {
     if (fields.secret !== undefined) cred.secret = fields.secret;
     if (fields.note !== undefined) cred.note = fields.note;
     if (fields.updated !== undefined) cred.updated = fields.updated;
+    if (fields.key_path !== undefined) cred.keyPath = fields.key_path;
     entries.push(cred);
   });
 

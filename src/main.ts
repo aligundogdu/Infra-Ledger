@@ -25,6 +25,8 @@ import { CredentialPicker } from "./ui/credential-picker";
 import { HistoryModal } from "./ui/history-modal";
 import { NewResourceModal } from "./ui/new-resource";
 import { SearchModal } from "./ui/search-modal";
+import { SshPicker } from "./ui/ssh-picker";
+import { sshTargets, type SshTarget } from "./util/ssh";
 import { INVENTORY_VIEW, InventoryView } from "./ui/inventory-view";
 import { SCAN_VIEW, ScanView } from "./ui/scan-view";
 import { ClipboardGuard } from "./util/clipboard";
@@ -242,6 +244,29 @@ export default class InfraLedgerPlugin extends Plugin {
     new Notice(message);
   }
 
+  /** "Copy SSH login" for ssh and key credentials, when the note has an address to log in to. */
+  renderSshButton(cell: HTMLElement, cred: Credential, path: string): void {
+    if (cred.kind !== "ssh" && cred.auth !== "key") return;
+    const r = this.index.snapshot.resources.find((res) => res.path === path);
+    if (!r || r.addresses.length === 0) return;
+    this.iconButton(cell, "terminal", "Copy SSH login", () => this.copySshLogin(cred, path));
+  }
+
+  copySshLogin(cred: Credential, path: string): void {
+    const r = this.index.snapshot.resources.find((res) => res.path === path);
+    const targets = r ? sshTargets(r, cred.user, cred.auth === "key" ? cred.keyPath : undefined) : [];
+    if (targets.length === 0) {
+      this.notify(`${r?.name ?? "This note"} has no ip or host, so there is no SSH command.`);
+      return;
+    }
+    const copy = (t: SshTarget) => {
+      const hint = cred.auth === "key" ? "" : " Use the copy button for the password.";
+      void this.copyText(t.command, `SSH command copied: ${t.command}.${hint}`);
+    };
+    if (targets.length === 1) copy(targets[0]);
+    else new SshPicker(this.app, targets, copy).open();
+  }
+
   /** Write actions shown next to the copy buttons of a credential row. */
   renderRowActions(cell: HTMLElement, cred: Credential, path: string, duplicate: boolean): void {
     this.iconButton(cell, "key-round", "Change password", () => {
@@ -401,10 +426,12 @@ export default class InfraLedgerPlugin extends Plugin {
     return ok;
   }
 
-  /** User for SSH commands built from a note: its first ssh credential, else none. */
-  sshUserFor(path: string): string | undefined {
-    const creds = this.index.snapshot.credentials.filter((c) => c.path === path);
-    return (creds.find((c) => c.cred.kind === "ssh") ?? creds.find((c) => c.cred.user))?.cred.user;
+  /** Login for SSH commands built from a note: its first ssh or key credential, else any with a user. */
+  sshLoginFor(path: string): { user?: string; keyPath?: string } {
+    const creds = this.index.snapshot.credentials.filter((c) => c.path === path).map((c) => c.cred);
+    const cred = creds.find((c) => c.kind === "ssh" || c.auth === "key") ?? creds.find((c) => c.user);
+    if (!cred) return {};
+    return { ...(cred.user && { user: cred.user }), ...(cred.auth === "key" && cred.keyPath && { keyPath: cred.keyPath }) };
   }
 
   /** Runs a pure mutation atomically on a note. On failure the note is left untouched. */

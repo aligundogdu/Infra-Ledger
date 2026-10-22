@@ -134,3 +134,21 @@ describe("parseCredsBlock", () => {
     expect(r.issues[0]).toMatchObject({ code: "missing-id", line: 3, index: 1 });
   });
 });
+
+describe("key auth", () => {
+  it("reads auth and key_path, defaulting to password", () => {
+    const [k, p, odd] = parseCredsBlock(`- id: a
+  label: deploy
+  auth: key
+  key_path: ~/.ssh/hetzner_ed25519
+- id: b
+  label: root
+- id: c
+  label: x
+  auth: token
+`).entries as Credential[];
+    expect([k.auth, k.keyPath]).toEqual(["key", "~/.ssh/hetzner_ed25519"]);
+    expect([p.auth, p.keyPath]).toEqual(["password", undefined]);
+    expect(odd.auth).toBe("password");
+  });
+});

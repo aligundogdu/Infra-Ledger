@@ -94,6 +94,16 @@ Open `test-vault/` as a vault in Obsidian (Open another vault → Open folder as
 - [ ] Turn off while values are encrypted is refused with the count. Decrypt all, then Turn off works.
 - [ ] `node scripts/decrypt.mjs test-vault/.obsidian/plugins/infra-ledger/data.json "test-vault/Infra/HomeServer.md"` prints the note with plain secrets after the master password.
 
+## Key auth and SSH login (0.7)
+
+- [ ] HomeServer: the deploy row shows a key icon and `homeserver_ed25519` (full path on hover), no password.
+- [ ] Copy SSH login on deploy: picker lists all four addresses with label and scope; picking `lan` copies `ssh -p 22 -i ~/.ssh/homeserver_ed25519 deploy@192.168.1.10`.
+- [ ] Copy SSH login on root (password): command without `-i`, Notice reminds to copy the password separately.
+- [ ] Forge ref row on HomeServer: Copy SSH login uses HomeServer's addresses with `forge` and `~/.ssh/forge_shared`; the copy button copies the passphrase.
+- [ ] Mail Server (one ip, one host): picker with two rows. A note without addresses shows no SSH button.
+- [ ] Add credential → Sign in with: SSH key: Key file field appears, Password becomes Passphrase (optional), Kind switches to ssh. Saved entry has `auth: key` and `key_path`, no secret when the passphrase is empty.
+- [ ] Search `deploy`, Cmd/Ctrl+Enter: commands include `-i`. Enter on a key credential without passphrase explains it logs in with a key.
+
 ## Mobile
 
 - [ ] Block renders and fits a phone screen (kind column hidden).

@@ -12,8 +12,12 @@ export interface Credential {
   id: string;
   label: string;
   user?: string;
+  /** For auth "key", the passphrase of the key, if any. */
   secret?: string;
   kind: Kind;
+  auth: "password" | "key";
+  /** Where the private key lives on this computer, for auth "key". */
+  keyPath?: string;
   note?: string;
   updated?: string;
   history: HistoryEntry[];

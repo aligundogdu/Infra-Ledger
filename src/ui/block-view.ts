@@ -118,10 +118,11 @@ export class CredsBlockView extends MarkdownRenderChild {
 
     this.renderUser(row, cred.user);
     row.createEl("td", { cls: "infra-ledger-kind", text: cred.kind });
-    this.renderSecret(row, cred.id, cred.secret);
+    this.renderSecret(row, cred.id, cred);
 
     const actions = row.createEl("td", { cls: "infra-ledger-actions" });
     this.renderCopyButtons(actions, cred);
+    this.plugin.renderSshButton(actions, cred, this.sourcePath);
     this.plugin.renderRowActions(actions, cred, this.sourcePath, duplicate);
 
     if (duplicate) {
@@ -159,8 +160,11 @@ export class CredsBlockView extends MarkdownRenderChild {
 
     this.renderUser(row, cred.user);
     row.createEl("td", { cls: "infra-ledger-kind", text: cred.kind });
-    this.renderSecret(row, `ref:${ref.index}:${cred.id}`, cred.secret);
-    this.renderCopyButtons(row.createEl("td", { cls: "infra-ledger-actions" }), cred);
+    this.renderSecret(row, `ref:${ref.index}:${cred.id}`, cred);
+    const actions = row.createEl("td", { cls: "infra-ledger-actions" });
+    this.renderCopyButtons(actions, cred);
+    // A shared key is used from this note: log in to this note's addresses.
+    this.plugin.renderSshButton(actions, cred, this.sourcePath);
   }
 
   private renderUser(row: HTMLElement, user?: string): void {
@@ -168,8 +172,16 @@ export class CredsBlockView extends MarkdownRenderChild {
     if (user) cell.createSpan({ cls: "infra-ledger-mono", text: user });
   }
 
-  private renderSecret(row: HTMLElement, key: string, secret?: string): void {
+  private renderSecret(row: HTMLElement, key: string, cred: Credential): void {
     const cell = row.createEl("td", { cls: "infra-ledger-secret" });
+    if (cred.auth === "key") {
+      const k = cell.createDiv({ cls: "infra-ledger-key" });
+      setIcon(k.createSpan({ cls: "infra-ledger-lock" }), "key-round");
+      const file = cred.keyPath ? (cred.keyPath.split(/[\\/]/).pop() ?? cred.keyPath) : "key file not set";
+      const name = k.createSpan({ cls: "infra-ledger-mono", text: file });
+      if (cred.keyPath) setTooltip(name, cred.keyPath);
+    }
+    const secret = cred.secret;
     if (secret === undefined) return;
     const encrypted = isEncrypted(secret);
     if (encrypted && !this.plugin.encryption.unlocked()) this.revealed.delete(key);
@@ -187,7 +199,8 @@ export class CredsBlockView extends MarkdownRenderChild {
 
   private renderCopyButtons(cell: HTMLElement, cred: Credential): void {
     if (cred.user) this.button(cell, "user", "Copy username", () => void this.plugin.copyUser(cred.user!));
-    if (cred.secret !== undefined) this.button(cell, "copy", "Copy secret", () => void this.plugin.copySecret(cred.secret!));
+    const what = cred.auth === "key" ? "Copy passphrase" : "Copy secret";
+    if (cred.secret !== undefined) this.button(cell, "copy", what, () => void this.plugin.copySecret(cred.secret!));
   }
 
   private async toggleReveal(key: string, secret: string): Promise<void> {
