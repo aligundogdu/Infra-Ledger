@@ -253,7 +253,7 @@ Saf moduller (`creds/*`, `util/generator.ts`, `util/ssh.ts`, arama esleme mantig
 
 # Sonraki surumler (2026-10-22 kararlari)
 
-Surum sirasi: `0.1.0` mevcut v1 (manuel test sonrasi yayin), `0.2.0` klasor alanlari + coklu adres/port, `0.3.0` cihaz, rehber notlari ve `ledger` blogu, `0.4.0` envanter paneli. Sifreleme ve secret tarayici (eski v2 taslagi) `0.4.0` sonrasina kayar.
+Surum sirasi: `0.1.0` mevcut v1 (manuel test sonrasi yayin), `0.2.0` klasor alanlari + `network` blogu, `0.3.0` cihaz, rehber notlari ve `ledger` blogu, `0.4.0` envanter paneli. Sifreleme ve secret tarayici (eski v2 taslagi) `0.4.0` sonrasina kayar.
 
 Kapsam disi (README'de acikca yazilir): calisiyor mu takibi (ping, uptime, port tarama), agda cihaz kesfi, satin alma/fatura/amortisman.
 
@@ -268,34 +268,45 @@ Kapsam disi (README'de acikca yazilir): calisiyor mu takibi (ping, uptime, port 
   - Sonuc alt satirinda alan adi yer alir: `Work · server · prod · 10.0.0.4`.
   - `@<alan>` oneki aramayi o alana daraltir (`@work prod pg`). Buyuk/kucuk harf ve aksan duyarsiz, alan adinin basiyla eslesir (`@w` -> Work). Eslesen alan yoksa sonuc bos ve bos durum metni: `No space named "<x>". Spaces: Personal, Work.`
 
-### Coklu adres ve port
+### Ag bilgisi: `network` blogu
 
-- `ip`, `host` ve yeni `ports` alanlari tek deger ya da metin listesi kabul eder. Her satir: once deger, sonra istege bagli serbest etiket.
+Karar (2026-10-22): adresler ve portlar Properties yerine notun altinda bir ` ```network ` blogunda tutulur. Sebep: bir sunucuda birden fazla public ve private adres, VPN adresi, arayuz, MAC, gateway, VLAN gibi teknik bilgiler olabilir; Properties'in duz listeleri buna yetmez ve liste girisi Obsidian'in tip menusunu bilmeyi gerektirir. Blok acik uclu tasarlanir: ileride gelecek teknik alanlar icin kod degisikligi gerekmez.
 
 ```yaml
-ip:
-  - 85.10.20.30 public
-  - 10.0.0.4 private
-host: box.example.com
-ssh_port: 22
-ports:
-  - 443 https
-  - 5432 postgres
+- ip: 85.10.20.30/26       # adres, istege bagli CIDR
+  scope: public            # public | private | vpn | other; yoksa adresten tahmin edilir
+  label: main
+  iface: eth0
+  mac: 00:11:22:33:44:55
+  gateway: 85.10.20.1
+  vlan: 4000
+  ethId: 2                 # bilinmeyen alan: korunur, detayda gosterilir, aranir
+- ip: 10.0.0.4
+  scope: private
+  label: vswitch
+- port: 5432
+  proto: tcp               # tcp | udp, varsayilan tcp
+  service: postgres
+  note: sadece private agdan
 ```
 
-- Ayristirma: satir ilk bosluktan bolunur; ilk parca deger, kalani etiket (trim). Bos satirlar atlanir. Port satirinda deger 1-65535 arasi tam sayi degilse satir "gecersiz port" uyarisiyla atlanir.
-- Model: `Resource.ips: Address[]`, `Resource.hosts: Address[]`, `Resource.ports: Port[]`; `Address = { value: string; label?: string }`, `Port = { port: number; label?: string }`. Eski `ip`/`host` tekil alanlari kaldirilir.
-- SSH:
-  - Adres sirasi: once tum ip'ler, sonra host'lar; ilk adres varsayilandir.
-  - Tek adres varsa davranis degismez.
-  - Birden fazla adres varsa masaustunde Mod+Enter adres secici acar (`private  ssh -p 22 deploy@10.0.0.4`); mobil aksiyon menusunde her adres ayri satirdir: `Copy SSH command (private)`.
-- Arama: tum ip, host, port numarasi ve etiketler aranabilir (`5432`, `tailscale`).
-- Blok gorunumu: tablonun ustunde kaynak satiri; ip, host ve portlar tiklaninca kopyalanan rozetler (`10.0.0.4 private`, `5432 postgres`). Rozet sadece ilk `creds` blogunun ustunde gosterilir.
+- Girdi tipi anahtara gore belirlenir: `ip` (ya da `host`) iceren girdi adrestir, `port` iceren girdi porttur. Ikisi de yoksa "gecersiz ag girdisi" uyarisi; satir korunur.
+- Adres alanlari: `ip` veya `host` (biri zorunlu), `scope`, `label`, `iface`, `mac`, `gateway`, `vlan`, `note`. `ip` icindeki `/nn` CIDR olarak ayrilir; SSH ve kopyalama CIDR'siz adresi kullanir.
+- `scope` yoksa tahmin: 10/8, 172.16/12, 192.168/16, fc00::/7, fe80::/10 -> private; 100.64/10 -> vpn; host adlari ve digerleri -> public. Bilinmeyen scope degeri `other`.
+- Port alanlari: `port` (1-65535 tam sayi, zorunlu), `proto`, `service`, `note`. Gecersiz port uyari ile atlanir.
+- Bilinmeyen alanlar her iki tipte de korunur, gosterilir ve aranir. Ham metinden okuma ve "yalnizca hedef blok degisir" kurallari `creds` ile aynidir.
+- Properties'teki tekil `ip`, `host` ve `ports` alanlari (deger + istege bagli etiket, tek deger ya da liste) okunmaya devam eder; basit sunucular icin tek satir yeterlidir. Bunlar blok satirlarindan once siralanir.
+- Gorunum (okuma modu): gruplu tablo: Public, Private, VPN, Other, Ports. Satirda deger (mono), etiket, arayuz, detaylar (mac, gateway, vlan, bilinmeyen alanlar), not; aksiyonlar: kopyala, SSH komutunu kopyala (adreslerde), sil (onayli). Altta "Add address" ve "Add port" butonlari form acar.
+- Properties'ten gelen adresler `creds` blogunun ustunde rozet olarak kalir (sadece Properties kaynakli olanlar; `network` blogundakiler kendi tablosunda).
+- Silme ve ekleme `vault.process` ile atomik; silme girdinin sirasi ve degeri (ip/port) eslesirse yapilir, eslesmezse "blok degisti" mesaji.
+- SSH: adres sirasi Properties ip'leri, blok adresleri (yazildigi sirayla), Properties host'lari. Tek adres -> dogrudan, birden fazla -> secici; secicide etiket ve scope gorunur.
+- Arama: tum adres, host, port, servis, etiket, arayuz, mac ve bilinmeyen alan degerleri aranir.
+- Komutlar: "Add address", "Add port" (aktif not). Yeni kaynak sablonu `server` ve `device` icin bos bir `network` blogu icerir.
 
 ### Test (0.2.0)
 
-- Birim: alan eslestirme (en uzun klasor, alansiz not, buyuk/kucuk harf), ayar tasima (eski `resourceFolder`), `@alan` ayristirma ve daraltma, adres/port ayristirma (tekil, liste, etiketli, gecersiz port, bos satir), SSH adres sirasi, arama haystack'inde ip/port/etiket.
-- Manuel: iki alanli test vault'u, New resource alan secimi, coklu adresli SSH secici, mobil aksiyon menusu.
+- Birim: alan eslestirme (en uzun klasor, alansiz not, buyuk/kucuk harf), ayar tasima (eski `resourceFolder`), `@alan` ayristirma ve daraltma, Properties adres/port ayristirma (tekil, liste, etiketli, gecersiz port, bos satir), `network` blogu parse (adres, host, port, CIDR, scope tahmini, bilinmeyen alan, gecersiz girdi, ham okuma), network mutate (adres/port ekleme, sira+deger eslesmesiyle silme, blok yoksa olusturma, blok disi byte byte ayni), SSH adres sirasi, arama haystack'inde tum ag alanlari.
+- Manuel: iki alanli test vault'u, New resource alan secimi, network tablosu ve Add address/Add port formlari, coklu adresli SSH secici, mobil aksiyon menusu.
 
 ## 0.3.0: Cihazlar, rehber notlari, ledger blogu
 
