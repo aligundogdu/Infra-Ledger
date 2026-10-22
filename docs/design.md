@@ -248,3 +248,100 @@ Saf moduller (`creds/*`, `util/generator.ts`, `util/ssh.ts`, arama esleme mantig
 - Community Plugins katalogunda `infra-ledger` id ve "Infra Ledger" adi tekrar kontrol edilir (ilk kontrol 2026-10-22, bos).
 - `minAppVersion` = 1.1.0 (`vault.process`) dogrulanir; kod blogu processor'unun ve pano temizliginin mobilde manuel test edilmesi.
 - Manifest teyit edilir: `isDesktopOnly: false`; Node API kullanilmiyor (yalnizca Web Crypto).
+
+---
+
+# Sonraki surumler (2026-10-22 kararlari)
+
+Surum sirasi: `0.1.0` mevcut v1 (manuel test sonrasi yayin), `0.2.0` klasor alanlari + coklu adres/port, `0.3.0` cihaz, rehber notlari ve `ledger` blogu, `0.4.0` envanter paneli. Sifreleme ve secret tarayici (eski v2 taslagi) `0.4.0` sonrasina kayar.
+
+Kapsam disi (README'de acikca yazilir): calisiyor mu takibi (ping, uptime, port tarama), agda cihaz kesfi, satin alma/fatura/amortisman.
+
+## 0.2.0: Alanlar (spaces), coklu adres ve port
+
+### Alanlar
+
+- Ayar `resourceFolder` (tek klasor) yerine isimli liste: `spaces: { name: string; folder: string }[]`. Varsayilan: `[{ name: "Infra", folder: "Infra" }]`. Eski ayar ilk yuklemede bu listeye tasinir.
+- Alan listesi indeksi KISITLAMAZ. Bir not, yolu bir alanin klasoruyle basliyorsa o alana aittir (en uzun eslesen klasor kazanir), hicbirine uymuyorsa alansizdir ve yine indekslenir.
+- "New resource" penceresinde alan secimi; son secilen alan `lastSpace` ayarinda hatirlanir. Tek alan varsa secim gosterilmez.
+- Arama:
+  - Sonuc alt satirinda alan adi yer alir: `Work · server · prod · 10.0.0.4`.
+  - `@<alan>` oneki aramayi o alana daraltir (`@work prod pg`). Buyuk/kucuk harf ve aksan duyarsiz, alan adinin basiyla eslesir (`@w` -> Work). Eslesen alan yoksa sonuc bos ve bos durum metni: `No space named "<x>". Spaces: Personal, Work.`
+
+### Coklu adres ve port
+
+- `ip`, `host` ve yeni `ports` alanlari tek deger ya da metin listesi kabul eder. Her satir: once deger, sonra istege bagli serbest etiket.
+
+```yaml
+ip:
+  - 85.10.20.30 public
+  - 10.0.0.4 private
+host: box.example.com
+ssh_port: 22
+ports:
+  - 443 https
+  - 5432 postgres
+```
+
+- Ayristirma: satir ilk bosluktan bolunur; ilk parca deger, kalani etiket (trim). Bos satirlar atlanir. Port satirinda deger 1-65535 arasi tam sayi degilse satir "gecersiz port" uyarisiyla atlanir.
+- Model: `Resource.ips: Address[]`, `Resource.hosts: Address[]`, `Resource.ports: Port[]`; `Address = { value: string; label?: string }`, `Port = { port: number; label?: string }`. Eski `ip`/`host` tekil alanlari kaldirilir.
+- SSH:
+  - Adres sirasi: once tum ip'ler, sonra host'lar; ilk adres varsayilandir.
+  - Tek adres varsa davranis degismez.
+  - Birden fazla adres varsa masaustunde Mod+Enter adres secici acar (`private  ssh -p 22 deploy@10.0.0.4`); mobil aksiyon menusunde her adres ayri satirdir: `Copy SSH command (private)`.
+- Arama: tum ip, host, port numarasi ve etiketler aranabilir (`5432`, `tailscale`).
+- Blok gorunumu: tablonun ustunde kaynak satiri; ip, host ve portlar tiklaninca kopyalanan rozetler (`10.0.0.4 private`, `5432 postgres`). Rozet sadece ilk `creds` blogunun ustunde gosterilir.
+
+### Test (0.2.0)
+
+- Birim: alan eslestirme (en uzun klasor, alansiz not, buyuk/kucuk harf), ayar tasima (eski `resourceFolder`), `@alan` ayristirma ve daraltma, adres/port ayristirma (tekil, liste, etiketli, gecersiz port, bos satir), SSH adres sirasi, arama haystack'inde ip/port/etiket.
+- Manuel: iki alanli test vault'u, New resource alan secimi, coklu adresli SSH secici, mobil aksiyon menusu.
+
+## 0.3.0: Cihazlar, rehber notlari, ledger blogu
+
+### Yeni tipler
+
+- `device`: donanim. Istege bagli duz alanlar: `device_type` (serbest metin: laptop, phone, router, nas...), `model`, `serial`, `location`, `assigned_to`, `warranty_until` (YYYY-MM-DD). Adres/port alanlari sunucuyla ayni.
+- Rehber tipleri: `person`, `location`. Credential tasimazlar; aramada ve envanterde gorunurler, SSH aksiyonu yoktur.
+- Saglayici icin ayri tip yoktur: saglayici notu `type: cloud` (ya da `service`) olan siradan bir kaynaktir, panel girisinin credential'i orada durur.
+
+### Link alanlari
+
+- `provider`, `location`, `assigned_to` (ve `ledger` icindeki `to`/`from`) duz metin ya da wiki link (`"[[Hetzner]]"`) kabul eder.
+- Link ise indeks hedef notu cozer; gosterimde notun adi ve tiklanabilir link kullanilir, aramada hedef notun adi da aranir. Cozulemeyen link duz metin gibi gosterilir, hata uretilmez.
+- Kisiler icin varsayilan oneri `type: person` notlaridir (karar A). Plugin kisi listesini `type: person` notlarindan ve gecmis `assigned_to` degerlerinden olusturur.
+
+### ledger blogu
+
+- Her kaynakta kullanilabilir (sunucu, cihaz, servis...). Dil: ` ```ledger `. YAML liste, en yeni en ustte.
+
+```yaml
+- date: 2026-10-22
+  event: assigned        # assigned | returned | service | repair | upgrade | moved | lost | retired | note
+  to: "[[Ayse Yilmaz]]"
+  note: yeni ise basladi
+- date: 2026-09-01
+  event: service
+  note: batarya degisti
+```
+
+- Alanlar: `date` (zorunlu, YYYY-MM-DD), `event` (zorunlu; bilinmeyen deger `note` gibi gosterilir), `to`, `from`, `note` (istege bagli). Bilinmeyen alanlar korunur. Ham metinden okuma ve "yalnizca hedef blok degisir" kurallari `creds` ile ayni.
+- Okuma gorunumu: zaman cizelgesi; ustte durum satiri: `Assigned to Ayse Yilmaz since 2026-10-22` / `Not assigned` / `Retired 2026-10-22`.
+
+### Komutlar
+
+- Assign: kisi secici (rehber + gecmis), istege bagli not. Islem tek `vault.process` icinde: mevcut `assigned_to` doluysa once `returned` (from: eski kisi) kaydi, sonra `assigned` (to: yeni kisi) kaydi eklenir; frontmatter `assigned_to` guncellenir. Notta `ledger` blogu yoksa olusturulur.
+- Return: `assigned_to` bosaltilir, `returned` kaydi eklenir. Zimmetli degilse komut gorunmez.
+- Add event: olay tipi, tarih (varsayilan bugun), not.
+- Frontmatter guncellemesi `vault.process` icinde ayni yazimda yapilir (tek atomik yazim). Frontmatter'da sadece `assigned_to` satiri degisir; diger satirlar byte byte ayni kalir.
+
+### Test (0.3.0)
+
+- Birim: ledger parse (ham okuma, zorunlu alanlar, bilinmeyen event), assign/return mutate (iki kayit sirasi, frontmatter tek satir degisimi, blok yoksa olusturma), link alanlari cozumleme, rehber tiplerinin aramada SSH aksiyonu olmamasi.
+- Manuel: cihaz notu, zimmet ve iade akisi, kisi notunun backlink'leri, zaman cizelgesi gorunumu.
+
+## 0.4.0: Envanter paneli (taslak)
+
+- Yan panel: kaynak listesi, filtreler (tip, alan, ortam, saglayici, lokasyon, etiket, kisi).
+- Kisiye gore gorunum: kimde ne var.
+- Uyarilar: garantisi 30 gun icinde bitenler, uzun suredir degismeyen sifreler, cozulemeyen ref ve linkler, duplicate id'ler.
