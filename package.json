@@ -1,0 +1,26 @@
+{
+  "name": "infra-ledger",
+  "version": "0.1.0",
+  "description": "Track servers, databases and cloud accounts in your notes. Keep a history of every password change, search and copy credentials fast, optionally encrypt secrets.",
+  "main": "main.js",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "tsc --noEmit && node esbuild.config.mjs production",
+    "lint": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "author": "Ali Gündoğdu",
+  "license": "MIT",
+  "dependencies": {
+    "yaml": "2.9.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "esbuild": "0.28.2",
+    "obsidian": "1.13.1",
+    "typescript": "5.9.3",
+    "vitest": "5.0.3"
+  }
+}
