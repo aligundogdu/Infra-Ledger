@@ -38,7 +38,8 @@ export type IssueCode =
   | "invalid-field"
   | "invalid-ref"
   | "invalid-network-entry"
-  | "invalid-port";
+  | "invalid-port"
+  | "invalid-ledger-entry";
 
 export interface BlockIssue {
   level: "error" | "warning";
