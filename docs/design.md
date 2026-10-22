@@ -396,3 +396,34 @@ Kisi, lokasyon ve saglayici notlarinda "bu nota baglanan her sey" listesi. Blok 
 - Birim: filtreleme (her filtre, metin + `@alan`, birlikte), siralama, kisiye gore gruplama (link ve duz metin ayni kisi sayilmaz, emekliler haric, not assigned grubu), uyari hesaplari (garanti gecmis/yaklasan/sinir gunu/kapali, sifre yasi esigi/kapali/updated yok sayaci, duplicate, ref, sync kopyasi, blok sorunlari).
 - Birim (related): kisinin simdiki cihazlari (link ve duz metin), bitmis donemler (iade, baskasina zimmet), lokasyon ve saglayici listeleri.
 - Manuel: panelin acilmasi, filtreler, siralama, sekmeler, tiklayinca not acilmasi, indeks degisince yenilenmesi, mobilde gorunum.
+
+## 0.5.0: Secret tarayici
+
+Vault'ta daginik duran sifreleri bulup kaynaklara aktarmak icin. Tamamen yerel calisir, ag erisimi yoktur. Hicbir degisiklik kullanici onayi olmadan yapilmaz.
+
+### Tarama
+
+- Komut "Scan vault for secrets". Tum markdown notlari okunur; `creds`, `network`, `ledger` ve `related` bloklarinin ici taranmaz.
+- Kurallar ve guven seviyeleri:
+  - Etiketli deger (yuksek): ayni satirda etiket + `:`/`=` + bosluksuz ya da tirnakli deger. Etiketler: password, passwd, pass, pwd, sifre, parola, secret, token, api key, access key, secret key (Turkce karakterli yazimlar dahil). Deger bos, yer tutucu (`xxx`, `****`, `<...>`) ya da `[[link]]` ise atlanir.
+  - Alt satirdaki deger (yuksek): satirda sadece etiket var (`Administrator Password`), sonraki dolu satir tek parca bir deger.
+  - Etiket + bosluk + deger (orta): `sa password Abc!2026` gibi; deger en az 6 karakter ve rakam ya da sembol icerir.
+  - Baglanti adresi (yuksek): `scheme://user:pass@host`; kullanici ve host da cikarilir.
+  - SQL (yuksek): `IDENTIFIED BY '...'`, `PASSWORD = '...'`, `ENCRYPTED PASSWORD '...'`; ayni satirdaki kullanici/login adi cikarilir.
+  - Bilinen token bicimleri (yuksek): AWS `AKIA...` ve iki satir icindeki 40 karakterlik secret, `ghp_`, `github_pat_`, `sk_live_`, `xox?-`, `-----BEGIN ... PRIVATE KEY-----` blogu.
+  - .env satiri (orta): anahtarinda PASS, SECRET, TOKEN ya da KEY gecen `KEY=value`.
+  - Etiketsiz aday (dusuk, ayarla acilir, varsayilan kapali): diger dillerdeki code block'larda tek basina duran 8-64 karakterlik, en az uc karakter sinifi iceren, URL ya da yol olmayan satir.
+- Ayni araliga denk gelen bulgulardan guveni yuksek olan kalir.
+
+### Sonuc paneli
+
+- Sag panelde not bazinda gruplu liste; her bulgu: tur, guven, satir numarasi, maskeli deger (`Fx••••gL`), goster/gizle.
+- Import: hedef kaynak (mevcut kaynaklar ya da yeni not), label, user, kind, id tahminle dolu gelir. Credential hedefin `creds` bloguna eklenir.
+- Import formunda "Replace in source with see [[Kaynak]]" secenegi (varsayilan acik). Secilirse kaynak nottaki yalnizca sifre metni `see [[Kaynak]]` ile degistirilir; satirin geri kalani ve notun diger kisimlari ayni kalir. Degistirme sifreyi eklemeden once yapilir; yazim aninda sifre metni beklenen yerde degilse islem iptal edilir.
+- Ignore: bulgu bir daha gosterilmez. Saklanan sadece notun yolu ve satir metninin SHA-256 ozetidir; deger saklanmaz.
+- Panel her import, ignore ya da elle duzeltmeden sonra ilgili notu yeniden tarar.
+
+### Test (0.5.0)
+
+- Birim: her kural icin pozitif ve negatif ornekler (yer tutucu, link, duzyazi), bloklarin disarida birakilmasi, cakisan bulgularin tekillestirilmesi, DSN/SQL kullanici cikarimi, maskeleme, kaynak satirda degistirme (yalnizca deger, kayma durumunda red).
+- Manuel: test vault'unda tarama, import (mevcut ve yeni kaynak), degistirme, ignore.
