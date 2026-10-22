@@ -67,11 +67,8 @@ export class CredsBlockView extends MarkdownRenderChild {
       const list = el.createEl("ul", { cls: "infra-ledger-warnings" });
       for (const w of warnings) list.createEl("li", { text: w.line ? `Line ${w.line}: ${w.message}` : w.message });
     }
-    this.renderFooter(el);
+    this.plugin.renderBlockFooter(el, this.sourcePath);
   }
-
-  /** Extension point for later actions under the table. */
-  protected renderFooter(_el: HTMLElement): void {}
 
   private renderCredential(body: HTMLElement, cred: Credential, snapshot: LedgerSnapshot): void {
     const others = (snapshot.byId.get(cred.id) ?? []).filter((ic) => ic.path !== this.sourcePath);

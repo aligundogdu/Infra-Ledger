@@ -1,9 +1,18 @@
 import { moment, Notice, Plugin, setIcon, setTooltip, TFile } from "obsidian";
-import { changeSecret, deleteHistoryEntry, type MutateResult } from "./creds/mutate";
+import {
+  addCredential,
+  changeSecret,
+  deleteCredential,
+  deleteHistoryEntry,
+  type MutateResult,
+  type NewCredential,
+} from "./creds/mutate";
 import { LedgerIndex } from "./index/ledger-index";
 import { DEFAULT_SETTINGS, InfraLedgerSettingTab, type InfraLedgerSettings } from "./settings";
 import { CredsBlockView } from "./ui/block-view";
 import { ChangePasswordModal } from "./ui/change-modal";
+import { ConfirmModal } from "./ui/confirm-modal";
+import { AddCredentialModal } from "./ui/credential-modal";
 import { CredentialPicker } from "./ui/credential-picker";
 import { HistoryModal } from "./ui/history-modal";
 import { ClipboardGuard } from "./util/clipboard";
@@ -35,6 +44,17 @@ export default class InfraLedgerPlugin extends Plugin {
       name: "Show history",
       checkCallback: (checking) =>
         this.withNoteCredential(checking, (cred, path) => new HistoryModal(this.app, this, cred.id, path).open()),
+    });
+
+    this.addCommand({
+      id: "add-credential",
+      name: "Add credential",
+      checkCallback: (checking) => {
+        const file = this.app.workspace.getActiveFile();
+        if (!file || file.extension !== "md") return false;
+        if (!checking) this.openAdd(file.path);
+        return true;
+      },
     });
 
     this.app.workspace.onLayoutReady(async () => {
@@ -89,6 +109,42 @@ export default class InfraLedgerPlugin extends Plugin {
       else this.openChange(cred, path);
     });
     this.iconButton(cell, "history", "Show history", () => new HistoryModal(this.app, this, cred.id, path).open());
+    this.iconButton(cell, "trash-2", "Delete credential", () => {
+      if (duplicate) {
+        this.notify(`Duplicate id "${cred.id}". Rename one before editing.`);
+        return;
+      }
+      const n = cred.history.length;
+      const extra = n === 0 ? "" : ` and its ${n} previous password${n === 1 ? "" : "s"}`;
+      new ConfirmModal(this.app, "Delete credential", `Delete ${cred.label}${extra}?`, "Delete", async () => {
+        if (await this.applyMutation(path, (note) => deleteCredential(note, cred.id))) {
+          this.notify(`Deleted ${cred.label}.`);
+        }
+      }).open();
+    });
+  }
+
+  renderBlockFooter(el: HTMLElement, path: string): void {
+    const footer = el.createDiv({ cls: "infra-ledger-footer" });
+    const add = footer.createEl("button", { cls: "infra-ledger-add" });
+    setIcon(add.createSpan(), "plus");
+    add.appendText("Add credential");
+    add.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.openAdd(path);
+    });
+  }
+
+  openAdd(path: string): void {
+    const name = path.split("/").pop()!.replace(/\.md$/, "");
+    new AddCredentialModal(this.app, this, path, name).open();
+  }
+
+  async addCredential(path: string, cred: NewCredential): Promise<boolean> {
+    const ok = await this.applyMutation(path, (note) => addCredential(note, cred));
+    if (ok) this.notify(`Added ${cred.label}.`);
+    return ok;
   }
 
   openChange(cred: Credential, path: string): void {
