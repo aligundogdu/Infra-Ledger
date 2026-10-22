@@ -9,7 +9,7 @@ import { parse } from "yaml";
 
 describe("resourceTemplate", () => {
   it("produces valid frontmatter and an empty creds block for every type", () => {
-    for (const type of ["server", "database", "cloud", "service", "other"] as const) {
+    for (const type of ["server", "database", "cloud", "service", "device", "other"] as const) {
       const note = resourceTemplate(type, "HomeServer");
       const fm = parse(note.split("---")[1]);
       expect(fm.type).toBe(type);
@@ -18,6 +18,12 @@ describe("resourceTemplate", () => {
       expect(blocks).toHaveLength(1);
       expect(parseCredsBlock(blocks[0].content)).toEqual({ entries: [], issues: [], ok: true });
     }
+    for (const type of ["person", "location"] as const) {
+      expect(findCredsBlocks(resourceTemplate(type, "X"))).toHaveLength(0);
+    }
+    const device = resourceTemplate("device", "Laptop");
+    expect(findBlocks(device, "ledger")).toHaveLength(1);
+    expect(parse(device.split("---")[1])).toMatchObject({ assigned_to: null, serial: null });
     expect(resourceTemplate("server", "X")).toContain("ssh_port: 22");
     expect(findBlocks(resourceTemplate("server", "X"), "network")).toHaveLength(1);
     expect(findBlocks(resourceTemplate("cloud", "X"), "network")).toHaveLength(0);

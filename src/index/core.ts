@@ -1,9 +1,19 @@
 import type { BlockIssue, Credential, CredRef, ParseResult } from "../model";
 import { spaceOf, type Space } from "../spaces";
 import { guessScope, type NetworkParseResult, type Scope } from "../network/parse";
+import { ledgerStatus, type LedgerParseResult, type LedgerStatus } from "../ledger/parse";
+import { parseLinkValue } from "../links";
 
-export type ResourceType = "server" | "database" | "cloud" | "service" | "other";
-const RESOURCE_TYPES: readonly string[] = ["server", "database", "cloud", "service", "other"];
+export type ResourceType = "server" | "database" | "cloud" | "service" | "device" | "person" | "location" | "other";
+const RESOURCE_TYPES: readonly string[] = ["server", "database", "cloud", "service", "device", "person", "location", "other"];
+
+/** Person and location notes are directory entries: no credentials, no SSH. */
+export function isDirectoryType(type: ResourceType): boolean {
+  return type === "person" || type === "location";
+}
+
+/** Properties that may hold a [[wiki link]] to another note. */
+export type LinkField = "provider" | "location" | "assigned_to";
 
 export interface Address {
   value: string;
@@ -37,8 +47,19 @@ export interface Resource {
   addresses: Address[];
   ports: Port[];
   url?: string;
+  /** Display text; a [[link]] target is in links.provider. */
   provider?: string;
   env?: string;
+  location?: string;
+  assignedTo?: string;
+  deviceType?: string;
+  model?: string;
+  serial?: string;
+  warrantyUntil?: string;
+  /** Link targets of link properties, keyed by property name. */
+  links: Partial<Record<LinkField, string>>;
+  /** Assignment state, for devices and notes with a ledger or assigned_to. */
+  status?: LedgerStatus;
   sshPort: number;
   tags: string[];
   space: string | null;
@@ -52,6 +73,7 @@ export interface FileRecord {
   frontmatter: Record<string, unknown> | null;
   blocks: ParseResult[];
   network?: NetworkParseResult[];
+  ledger?: LedgerParseResult[];
 }
 
 export interface IndexedCredential {
@@ -91,6 +113,7 @@ export function resourceFromFrontmatter(
   fm: Record<string, unknown> | null,
   space: string | null = null,
   network: NetworkParseResult[] = [],
+  ledger: LedgerParseResult[] = [],
 ): Resource | null {
   if (!fm || fm.type === undefined || fm.type === null || fm.type === "") return null;
   const type = String(fm.type).toLowerCase();
@@ -120,11 +143,23 @@ export function resourceFromFrontmatter(
     sshPort: toPort(fm.ssh_port),
     tags: toTags(fm.tags),
     space,
+    links: {},
     warnings: invalid.map((row) => `Port "${row}" is not a number between 1 and 65535.`),
   };
-  for (const key of ["url", "provider", "env"] as const) {
+  for (const [key, field] of [["url", "url"], ["env", "env"], ["device_type", "deviceType"], ["model", "model"],
+    ["serial", "serial"], ["warranty_until", "warrantyUntil"]] as const) {
     const v = fm[key];
-    if (v !== undefined && v !== null && v !== "") resource[key] = String(v);
+    if (v !== undefined && v !== null && v !== "") resource[field] = String(v);
+  }
+  for (const [key, field] of [["provider", "provider"], ["location", "location"], ["assigned_to", "assignedTo"]] as const) {
+    const value = parseLinkValue(fm[key]);
+    if (!value) continue;
+    resource[field] = value.display;
+    if (value.link) resource.links[key] = value.link;
+  }
+  const events = ledger.flatMap((l) => l.events);
+  if (resource.type === "device" || events.length > 0 || resource.assignedTo) {
+    resource.status = ledgerStatus(events, fm.assigned_to);
   }
   return resource;
 }
@@ -180,9 +215,9 @@ export function buildIndex(files: FileRecord[], spaces: Space[] = []): LedgerSna
 
   for (const f of files) {
     const space = spaceOf(f.path, spaces);
-    const resource = resourceFromFrontmatter(f.path, f.basename, f.frontmatter, space, f.network);
+    const resource = resourceFromFrontmatter(f.path, f.basename, f.frontmatter, space, f.network, f.ledger);
     if (resource) resources.push(resource);
-    const fileIssues = [...f.blocks, ...(f.network ?? [])].flatMap((b) => b.issues);
+    const fileIssues = [...f.blocks, ...(f.network ?? []), ...(f.ledger ?? [])].flatMap((b) => b.issues);
     if (fileIssues.length > 0) issues.set(f.path, fileIssues);
     for (const block of f.blocks) {
       for (const entry of block.entries) {

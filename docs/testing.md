@@ -45,6 +45,18 @@ Open `test-vault/` as a vault in Obsidian (Open another vault → Open folder as
 - [ ] New resource with two spaces: space dropdown, note lands in the chosen folder, the choice is remembered next time.
 - [ ] An old `data.json` with `resourceFolder` loads as one space.
 
+## Devices and ledger (0.3)
+
+- [ ] `Assets/Laptop 07.md`: ledger shows "Assigned to Mehmet Kaya since 2026-06-15", timeline with assigned and note events, `invoice: INV-2026-118` as a detail. Person names are links.
+- [ ] Assign → pick Ayşe Yılmaz (person note) → note "new hire". Properties `assigned_to` becomes `"[[Ayşe Yılmaz]]"` and only that line changes; ledger gets "assigned to Ayşe" on top and "returned from Mehmet" below it.
+- [ ] Assign → type a new name without a note ("Guest"): suggestion "plain text, no person note", written as plain text.
+- [ ] Return with a note: `assigned_to` is emptied, ledger logs the return, Return button disappears.
+- [ ] Add event: service with today's date and a note, shows on top.
+- [ ] Office Printer (no ledger block): command "Assign" creates a ledger block at the end of the note.
+- [ ] Open `People/Ayşe Yılmaz.md`: backlinks list Laptop 07.
+- [ ] Search `macbook`, `C02XYZ`, `ayse`, `office 2f`: Laptop 07. Subtitle shows "with <name>". People and locations show without SSH actions.
+- [ ] New resource → device: template with hardware fields, network, creds and ledger blocks. person and location: no creds block.
+
 ## Mobile
 
 - [ ] Block renders and fits a phone screen (kind column hidden).

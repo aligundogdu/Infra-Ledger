@@ -1,5 +1,5 @@
 import { App, Modal, normalizePath, Setting, TFile } from "obsidian";
-import type { ResourceType } from "../index/core";
+import { isDirectoryType, type ResourceType } from "../index/core";
 import type { Space } from "../spaces";
 import type InfraLedgerPlugin from "../main";
 
@@ -8,17 +8,26 @@ const FIELDS: Record<ResourceType, string[]> = {
   database: ["host", "provider", "env"],
   cloud: ["provider", "url"],
   service: ["url", "provider", "env"],
+  device: ["device_type", "model", "serial", "location", "assigned_to", "warranty_until"],
+  person: ["email", "team"],
+  location: ["address"],
   other: ["host", "url"],
 };
 
 const INVALID_NAME = /[\\/:*?"<>|#^[\]]/;
 
-const WITH_NETWORK: ResourceType[] = ["server"];
+const WITH_NETWORK: ResourceType[] = ["server", "device"];
+const WITH_LEDGER: ResourceType[] = ["device"];
 
 export function resourceTemplate(type: ResourceType, name: string): string {
   const fields = FIELDS[type].map((f) => (f.includes(":") ? f : `${f}:`));
-  const network = WITH_NETWORK.includes(type) ? ["```network", "```", ""] : [];
-  return ["---", `type: ${type}`, ...fields, "tags: []", "---", "", `# ${name}`, "", ...network, "```creds", "```", ""].join("\n");
+  const block = (lang: string) => ["```" + lang, "```", ""];
+  return [
+    "---", `type: ${type}`, ...fields, "tags: []", "---", "", `# ${name}`, "",
+    ...(WITH_NETWORK.includes(type) ? block("network") : []),
+    ...(isDirectoryType(type) ? [] : block("creds")),
+    ...(WITH_LEDGER.includes(type) ? block("ledger") : []),
+  ].join("\n");
 }
 
 export class NewResourceModal extends Modal {

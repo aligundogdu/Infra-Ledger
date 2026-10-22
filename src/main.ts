@@ -12,6 +12,9 @@ import { blockOrdinalAtLine, firstCredsBlockLine } from "./creds/locate";
 import { addNetworkEntry, deleteNetworkEntry, type NetworkEntryRef, type NewAddress, type NewPort } from "./network/mutate";
 import { NetworkBlockView } from "./ui/network-view";
 import { AddAddressModal, AddPortModal } from "./ui/network-modal";
+import { LedgerBlockView } from "./ui/ledger-view";
+import { AddEventModal, openAssignFlow, openReturnFlow } from "./ui/ledger-modals";
+import { addEvent, assignTo, returnDevice, type NewEvent } from "./ledger/mutate";
 import { DEFAULT_SETTINGS, InfraLedgerSettingTab, type InfraLedgerSettings } from "./settings";
 import { CredsBlockView } from "./ui/block-view";
 import { ChangePasswordModal } from "./ui/change-modal";
@@ -56,6 +59,9 @@ export default class InfraLedgerPlugin extends Plugin {
       const ordinal = info ? blockOrdinalAtLine(info.text, "network", info.lineStart) : null;
       ctx.addChild(new NetworkBlockView(el, this, source, ctx.sourcePath, ordinal));
     });
+    this.registerMarkdownCodeBlockProcessor("ledger", (source, el, ctx) => {
+      ctx.addChild(new LedgerBlockView(el, this, source, ctx.sourcePath));
+    });
 
     addIcon(RIBBON_ICON_ID, RIBBON_ICON);
     this.addRibbonIcon(RIBBON_ICON_ID, "Infra Ledger: Search", () => new SearchModal(this.app, this).open());
@@ -96,6 +102,8 @@ export default class InfraLedgerPlugin extends Plugin {
     for (const [id, name, open] of [
       ["add-address", "Add address", (path: string) => this.openAddAddress(path)],
       ["add-port", "Add port", (path: string) => this.openAddPort(path)],
+      ["assign", "Assign", (path: string) => this.openAssign(path)],
+      ["add-event", "Add event", (path: string) => this.openAddEvent(path)],
     ] as const) {
       this.addCommand({
         id,
@@ -108,6 +116,18 @@ export default class InfraLedgerPlugin extends Plugin {
         },
       });
     }
+
+    this.addCommand({
+      id: "return",
+      name: "Return",
+      checkCallback: (checking) => {
+        const file = this.app.workspace.getActiveFile();
+        const r = file && this.index.snapshot.resources.find((res) => res.path === file.path);
+        if (!file || r?.status?.kind !== "assigned") return false;
+        if (!checking) this.openReturn(file.path);
+        return true;
+      },
+    });
 
     this.app.workspace.onLayoutReady(async () => {
       this.index.watch((ref) => this.registerEvent(ref));
@@ -225,6 +245,41 @@ export default class InfraLedgerPlugin extends Plugin {
   async deleteHistoryEntry(path: string, id: string, index: number): Promise<boolean> {
     const ok = await this.applyMutation(path, (note) => deleteHistoryEntry(note, id, index));
     if (ok) this.notify("History entry deleted.");
+    return ok;
+  }
+
+  openAssign(path: string): void {
+    openAssignFlow(this, path);
+  }
+
+  openReturn(path: string): void {
+    const r = this.index.snapshot.resources.find((res) => res.path === path);
+    if (r?.status?.kind !== "assigned") {
+      this.notify("This device isn't assigned to anyone.");
+      return;
+    }
+    openReturnFlow(this, path, r.status.who.display);
+  }
+
+  openAddEvent(path: string): void {
+    new AddEventModal(this.app, this, path).open();
+  }
+
+  async assign(path: string, person: string, display: string, note?: string): Promise<boolean> {
+    const ok = await this.applyMutation(path, (text) => assignTo(text, person, today(), note));
+    if (ok) this.notify(`Assigned to ${display}.`);
+    return ok;
+  }
+
+  async returnDevice(path: string, note?: string): Promise<boolean> {
+    const ok = await this.applyMutation(path, (text) => returnDevice(text, today(), note));
+    if (ok) this.notify("Returned. The device is not assigned now.");
+    return ok;
+  }
+
+  async addEvent(path: string, event: NewEvent): Promise<boolean> {
+    const ok = await this.applyMutation(path, (text) => addEvent(text, event));
+    if (ok) this.notify(`Added ${event.event} on ${event.date}.`);
     return ok;
   }
 

@@ -31,6 +31,7 @@ Everything is plain Markdown. Remove the plugin and your notes still read fine.
 - **Spaces.** Keep personal and work resources in separate folders. New resources go where you pick, `@work` in search shows one space only.
 - **Network details.** Several public, private and VPN addresses per server with interface, MAC, gateway, VLAN and any field you add. Pick which address the SSH command uses.
 - **Clipboard that cleans up.** Copied secrets are cleared after 30 seconds (configurable).
+- **Devices and assignments.** Hardware details, who has which device, and a log of assignments, returns, repairs and moves.
 - **Desktop and mobile.** No Node APIs, works on iOS and Android.
 
 ## The format
@@ -92,6 +93,34 @@ In reading view the `creds` block renders as a table with masked secrets and but
 
 A server with a single address can skip the block and use properties instead: `ip: 10.0.0.4`, `host: box.example.com`, `ports: [22 ssh, 443 https]`. Those show as chips above the credentials.
 
+### Devices and assignments
+
+Laptops, phones, routers and printers are `type: device` notes with hardware fields. A `ledger` block keeps their history, newest on top. `person` and `location` notes are plain directory entries you can link to.
+
+````markdown
+---
+type: device
+device_type: laptop
+model: MacBook Pro 14 M3
+serial: C02XYZ123
+location: "[[Office 2F]]"
+assigned_to: "[[Ayşe Yılmaz]]"
+warranty_until: 2027-05-01
+---
+
+```ledger
+- date: 2026-10-22
+  event: assigned          # assigned | returned | service | repair | upgrade | moved | lost | retired | note
+  to: "[[Ayşe Yılmaz]]"
+  note: new hire
+- date: 2026-09-01
+  event: service
+  note: battery replaced
+```
+````
+
+**Assign** picks a person (person notes first, any name works), logs the previous holder as returned and updates `assigned_to`. **Return** and **Add event** work the same way. Because people, locations and providers can be notes, their backlinks list every device and server that points to them. `ledger` blocks work on any resource, so a server can log "moved to HEL1" or "RAM upgraded" too.
+
 Rules worth knowing:
 
 - `id` must be unique across the vault. The plugin suggests one when you add a credential.
@@ -107,6 +136,9 @@ Rules worth knowing:
 | Add credential | Add a credential to the current note |
 | Add address | Add an ip or host to the current note's network block |
 | Add port | Add a port to the current note's network block |
+| Assign | Give the current device to a person and log it |
+| Return | Take the current device back and log it |
+| Add event | Log a service, repair, upgrade, move, loss, retirement or note |
 | Change password | Rotate a secret and keep the old one in history |
 | Show history | List previous secrets of a credential |
 
@@ -129,9 +161,13 @@ Encryption is planned for v2. Until then, secrets are stored as plain text. Infr
 
 ## Roadmap
 
-- **v1** Format, block view, change password with history, add and delete credentials, quick search, new resource command.
-- **v2** Optional encryption with a master password and a recovery key. A scanner that finds passwords scattered across your vault and imports them into resources.
-- **v3** Inventory side panel with filters, warnings for passwords that haven't changed in a long time.
+- **0.1** Credentials, block view, change password with history, quick search, new resource command.
+- **0.2** Spaces (personal and work folders), network block with addresses and ports.
+- **0.3** Devices, people and locations, assignment ledger.
+- **0.4** Inventory side panel: filters, who has what, warranty and password age warnings.
+- **Later** Optional encryption with a master password and a recovery key. A scanner that finds passwords scattered across your vault and imports them into resources.
+
+Out of scope: uptime and ping checks, network scanning, purchasing and depreciation.
 
 ## Install
 

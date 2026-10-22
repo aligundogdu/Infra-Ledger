@@ -41,6 +41,29 @@ describe("buildSearchItems", () => {
   });
 });
 
+describe("devices and directory notes", () => {
+  const s2 = buildIndex([
+    file("Assets/Laptop 07.md", { type: "device", device_type: "laptop", model: "MacBook Pro 14", serial: "C02XYZ",
+      assigned_to: "[[Ayşe Yılmaz]]", location: "[[Office 2F]]" }),
+    file("People/Ayşe Yılmaz.md", { type: "person" }),
+    file("Assets/Router.md", { type: "device", device_type: "router", ip: "10.0.0.1" }),
+  ]);
+  const items = buildSearchItems(s2);
+  const titles = (q: string) => matchItems(q, items).map((i) => i.title);
+
+  it("finds devices by model, serial, holder and location", () => {
+    expect(titles("macbook")).toEqual(["Laptop 07"]);
+    expect(titles("c02xyz")).toEqual(["Laptop 07"]);
+    expect(titles("ayse laptop")).toEqual(["Laptop 07"]);
+    expect(titles("office")).toEqual(["Laptop 07"]);
+  });
+  it("describes devices and people", () => {
+    expect(items.find((i) => i.title === "Laptop 07")!.subtitle).toBe("device · laptop · with Ayşe Yılmaz");
+    expect(items.find((i) => i.title === "Ayşe Yılmaz")!.subtitle).toBe("person");
+    expect(items.find((i) => i.title === "Router")!.subtitle).toBe("device · router · 10.0.0.1");
+  });
+});
+
 describe("parseQuery", () => {
   const names = SPACES.map((s) => s.name);
   it("extracts a space prefix by case-insensitive prefix", () => {

@@ -176,3 +176,42 @@
   display: flex;
   gap: var(--size-4-2);
 }
+
+.infra-ledger-status {
+  font-size: var(--font-ui-small);
+  margin-bottom: var(--size-4-2);
+  padding-left: var(--size-4-2);
+  box-shadow: inset 2px 0 0 var(--infra-ledger-margin);
+}
+.infra-ledger-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.infra-ledger-event {
+  display: flex;
+  gap: var(--size-4-2);
+  padding: var(--size-4-1) 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+  font-size: var(--font-ui-small);
+}
+.infra-ledger-event-icon {
+  color: var(--text-muted);
+  flex: none;
+  padding-top: 2px;
+}
+.infra-ledger-event-icon svg {
+  width: var(--icon-s);
+  height: var(--icon-s);
+}
+.infra-ledger-event.is-assigned .infra-ledger-event-icon,
+.infra-ledger-event.is-returned .infra-ledger-event-icon {
+  color: var(--infra-ledger-margin);
+}
+.infra-ledger-event-name {
+  font-weight: var(--font-semibold);
+}
+.infra-ledger-log .infra-ledger-footer {
+  display: flex;
+  gap: var(--size-4-2);
+}

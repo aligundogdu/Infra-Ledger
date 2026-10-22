@@ -99,12 +99,25 @@ function resourceTerms(r: Resource): string[] {
     a.value, a.label, a.scope, a.iface, a.mac, a.gateway, a.vlan, a.note, ...Object.values(a.extra),
   ]);
   const ports = r.ports.flatMap((p) => [String(p.port), p.service, p.note, ...Object.values(p.extra)]);
-  return [r.type, r.provider, r.env, r.space, ...addresses, ...ports, ...r.tags].filter((x): x is string => !!x);
+  const hardware = [r.deviceType, r.model, r.serial, r.location, r.assignedTo, r.warrantyUntil];
+  return [r.type, r.provider, r.env, r.space, ...hardware, ...addresses, ...ports, ...r.tags].filter(
+    (x): x is string => !!x,
+  );
 }
 
 function describe(r: Resource | null, space: string | null, extra: string | null): string {
-  const parts = r ? [r.type, r.env, r.addresses[0]?.value] : ["no resource"];
-  return [space, ...parts, extra].filter(Boolean).join(" · ");
+  return [space, ...describeResource(r), extra].filter(Boolean).join(" · ");
+}
+
+function describeResource(r: Resource | null): (string | undefined)[] {
+  if (!r) return ["no resource"];
+  if (r.type === "person" || r.type === "location") return [r.type];
+  if (r.type === "device") {
+    const holder =
+      r.status?.kind === "retired" ? `retired ${r.status.since}` : r.assignedTo ? `with ${r.assignedTo}` : r.addresses[0]?.value;
+    return [r.type, r.deviceType, holder];
+  }
+  return [r.type, r.env, r.addresses[0]?.value];
 }
 
 function normalize(text: string): string {

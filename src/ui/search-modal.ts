@@ -1,6 +1,7 @@
 import { App, Platform, SuggestModal } from "obsidian";
 import { buildSearchItems, matchItems, parseQuery, type SearchItem } from "../util/search";
 import { sshTargets, type SshTarget } from "../util/ssh";
+import { isDirectoryType } from "../index/core";
 import type InfraLedgerPlugin from "../main";
 
 type Action =
@@ -133,7 +134,7 @@ function actionLabel(a: Action): string {
 }
 
 function targetsOf(item: SearchItem): SshTarget[] {
-  if (!item.resource) return [];
+  if (!item.resource || isDirectoryType(item.resource.type)) return [];
   return sshTargets(item.resource, item.credential?.cred.user);
 }
 

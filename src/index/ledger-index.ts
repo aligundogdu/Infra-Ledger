@@ -1,6 +1,7 @@
 import { App, Events, TAbstractFile, TFile } from "obsidian";
 import { findBlocks, findCredsBlocks } from "../creds/locate";
 import { parseNetworkBlock } from "../network/parse";
+import { parseLedgerBlock } from "../ledger/parse";
 import { parseCredsBlock } from "../creds/parse";
 import { buildIndex, EMPTY_SNAPSHOT, type FileRecord, type LedgerSnapshot } from "./core";
 import type { Space } from "../spaces";
@@ -92,17 +93,19 @@ export class LedgerIndex extends Events {
     const hasCode = cache?.sections?.some((s) => s.type === "code") ?? true;
     let blocks: FileRecord["blocks"] = [];
     let network: NonNullable<FileRecord["network"]> = [];
+    let ledger: NonNullable<FileRecord["ledger"]> = [];
     if (hasCode) {
       // Sections give the position of code blocks but not their language, so read and check.
       const text = await this.app.vault.cachedRead(file);
       blocks = findCredsBlocks(text).map((b) => parseCredsBlock(b.content));
       network = findBlocks(text, "network").map((b) => parseNetworkBlock(b.content));
+      ledger = findBlocks(text, "ledger").map((b) => parseLedgerBlock(b.content));
     }
-    if (!frontmatter?.type && blocks.length === 0 && network.length === 0) {
+    if (!frontmatter?.type && blocks.length === 0 && network.length === 0 && ledger.length === 0) {
       this.records.delete(file.path);
       return;
     }
-    this.records.set(file.path, { path: file.path, basename: file.basename, frontmatter, blocks, network });
+    this.records.set(file.path, { path: file.path, basename: file.basename, frontmatter, blocks, network, ledger });
   }
 
   private rebuild(): void {

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildIndex, parseAddresses, parsePorts, resourceFromFrontmatter, type FileRecord } from "../../src/index/core";
 import { parseCredsBlock } from "../../src/creds/parse";
 import { parseNetworkBlock } from "../../src/network/parse";
+import { parseLedgerBlock } from "../../src/ledger/parse";
 
 function file(path: string, fm: Record<string, unknown> | null, ...blocks: string[]): FileRecord {
   const basename = path.split("/").pop()!.replace(/\.md$/, "");
@@ -15,7 +16,7 @@ describe("resourceFromFrontmatter", () => {
     });
     expect(r).toEqual({
       path: "Infra/Home.md", name: "Home", type: "server", provider: "proxmox", env: "home", sshPort: 2222,
-      tags: ["homelab", "pve"], ports: [], space: null, warnings: [],
+      tags: ["homelab", "pve"], ports: [], space: null, warnings: [], links: {},
       addresses: [{ value: "10.0.0.4", isHost: false, scope: "private", source: "properties", extra: {} }],
     });
   });
@@ -77,6 +78,43 @@ describe("spaces", () => {
     const byName = Object.fromEntries(s.resources.map((r) => [r.name, r.space]));
     expect(byName).toEqual({ DB: "Work prod", Box: "Work", Home: "Personal" });
     expect(s.credentials.map((c) => [c.cred.id, c.space])).toEqual([["a", "Work prod"], ["b", null]]);
+  });
+});
+
+describe("devices and directory notes", () => {
+  it("reads hardware fields, links and the ledger status", () => {
+    const ledger = parseLedgerBlock("- date: 2026-10-22\n  event: assigned\n  to: \"[[Ayse Yilmaz]]\"\n");
+    const s = buildIndex([
+      {
+        ...file("Laptop 07.md", {
+          type: "device", device_type: "laptop", model: "MacBook Pro 14", serial: "C02XYZ",
+          location: "[[Office 2F]]", assigned_to: "[[Ayse Yilmaz]]", warranty_until: "2027-05-01", provider: "[[Apple]]",
+        }),
+        ledger: [ledger],
+      },
+      file("People/Ayse Yilmaz.md", { type: "person" }),
+      file("Office 2F.md", { type: "location" }),
+    ]);
+    const d = s.resources.find((r) => r.name === "Laptop 07")!;
+    expect(d).toMatchObject({
+      type: "device", deviceType: "laptop", model: "MacBook Pro 14", serial: "C02XYZ", warrantyUntil: "2027-05-01",
+      provider: "Apple", location: "Office 2F", assignedTo: "Ayse Yilmaz",
+      links: { provider: "Apple", location: "Office 2F", assigned_to: "Ayse Yilmaz" },
+      status: { kind: "assigned", who: { display: "Ayse Yilmaz", link: "Ayse Yilmaz" }, since: "2026-10-22" },
+    });
+    expect(s.resources.find((r) => r.name === "Ayse Yilmaz")!.type).toBe("person");
+    expect(s.resources.find((r) => r.name === "Office 2F")!.type).toBe("location");
+  });
+
+  it("keeps plain text values without links and gives non-devices no status", () => {
+    const s = buildIndex([file("Box.md", { type: "server", provider: "hetzner", location: "FSN1" })]);
+    expect(s.resources[0]).toMatchObject({ provider: "hetzner", location: "FSN1", links: {} });
+    expect(s.resources[0].status).toBeUndefined();
+  });
+
+  it("collects ledger issues", () => {
+    const s = buildIndex([{ ...file("D.md", { type: "device" }), ledger: [parseLedgerBlock("- event: note\n")] }]);
+    expect(s.issues.get("D.md")?.[0].code).toBe("invalid-ledger-entry");
   });
 });
 

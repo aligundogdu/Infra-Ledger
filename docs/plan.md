@@ -6,7 +6,9 @@
 
 **Tech stack:** TypeScript 5, esbuild, vitest, `yaml` 2.x (Document API, YAML 1.2 core schema), Obsidian API (`obsidian` npm types).
 
-**Spec:** `docs/design.md`. **Brand and copy:** `brand/brand.md`.
+**Spec:** `docs/design.md`.
+
+**Status (2026-10-22):** phases 0-11 done; 0.2 (spaces, network block) and 0.3 (devices, ledger) built on top, see the spec. **Brand and copy:** `brand/brand.md`.
 
 ## Global constraints
 
