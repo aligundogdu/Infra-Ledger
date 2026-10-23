@@ -40,6 +40,7 @@ import { sshTargets, type SshTarget } from "./util/ssh";
 import { INVENTORY_VIEW, InventoryView } from "./ui/inventory-view";
 import { SCAN_VIEW, ScanView } from "./ui/scan-view";
 import { ClipboardGuard } from "./util/clipboard";
+import { PathTracker } from "./util/paths";
 import { migrateSpaces, type Space } from "./spaces";
 import { EncryptionController } from "./crypto/controller";
 import type { Credential } from "./model";
@@ -57,6 +58,8 @@ export default class InfraLedgerPlugin extends Plugin {
   override settings: InfraLedgerSettings = structuredClone(DEFAULT_SETTINGS);
   index!: LedgerIndex;
   encryption!: EncryptionController;
+  /** Where moved notes went, for forms and blocks opened before a move. */
+  readonly paths = new PathTracker();
   private clipboard!: ClipboardGuard;
   private shownSyncHints = new Set<string>();
 
@@ -177,6 +180,9 @@ export default class InfraLedgerPlugin extends Plugin {
         return true;
       },
     });
+
+    this.registerEvent(this.app.vault.on("rename", (file, oldPath) => this.paths.renamed(oldPath, file.path)));
+    this.registerEvent(this.app.vault.on("create", (file) => this.paths.created(file.path)));
 
     this.app.workspace.onLayoutReady(async () => {
       this.index.watch((ref) => this.registerEvent(ref));
@@ -470,6 +476,7 @@ export default class InfraLedgerPlugin extends Plugin {
 
   /** Runs a pure mutation atomically on a note. On failure the note is left untouched. */
   async applyMutation(path: string, mutate: (note: string) => MutateResult): Promise<boolean> {
+    path = this.paths.current(path);
     const file = this.app.vault.getAbstractFileByPath(path);
     if (!(file instanceof TFile)) {
       this.notify(`Can't save: "${path}" no longer exists.`);

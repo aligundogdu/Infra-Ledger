@@ -7,7 +7,7 @@ export class RelatedBlockView extends MarkdownRenderChild {
   constructor(
     containerEl: HTMLElement,
     private readonly plugin: InfraLedgerPlugin,
-    private readonly sourcePath: string,
+    private sourcePath: string,
   ) {
     super(containerEl);
   }
@@ -15,6 +15,14 @@ export class RelatedBlockView extends MarkdownRenderChild {
   override onload(): void {
     this.render();
     this.registerEvent(this.plugin.index.on("changed", () => this.render()));
+    // Obsidian keeps rendered blocks when their note moves; follow the note so actions write to it.
+    this.registerEvent(
+      this.plugin.app.vault.on("rename", (file, oldPath) => {
+        if (oldPath !== this.sourcePath) return;
+        this.sourcePath = file.path;
+        this.render();
+      }),
+    );
   }
 
   private render(): void {

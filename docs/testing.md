@@ -114,6 +114,12 @@ Open `test-vault/` as a vault in Obsidian (Open another vault → Open folder as
 - [ ] Pencil on a port: change the service, save.
 - [ ] Edit a row after changing the block by hand so the row moved: save is refused with "the block changed".
 
+## Moving notes (0.7.7)
+
+- [ ] Open HomeServer in reading view, move it to a subfolder (drag in the file explorer). Without reopening: copy, reveal, Change password, Edit, Add credential and Add address work and write to the moved file.
+- [ ] Open the Change password form, move the note, then save: the moved note gets the change.
+- [ ] Inventory and search show the new path right after the move.
+
 ## Mobile
 
 - [ ] Block renders and fits a phone screen (kind column hidden).

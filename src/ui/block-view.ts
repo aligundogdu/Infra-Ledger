@@ -17,7 +17,7 @@ export class CredsBlockView extends MarkdownRenderChild {
     containerEl: HTMLElement,
     private readonly plugin: InfraLedgerPlugin,
     private readonly source: string,
-    private readonly sourcePath: string,
+    private sourcePath: string,
     private readonly showResource: boolean,
   ) {
     super(containerEl);
@@ -26,6 +26,14 @@ export class CredsBlockView extends MarkdownRenderChild {
   override onload(): void {
     this.render();
     this.registerEvent(this.plugin.index.on("changed", () => this.render()));
+    // Obsidian keeps rendered blocks when their note moves; follow the note so actions write to it.
+    this.registerEvent(
+      this.plugin.app.vault.on("rename", (file, oldPath) => {
+        if (oldPath !== this.sourcePath) return;
+        this.sourcePath = file.path;
+        this.render();
+      }),
+    );
   }
 
   override onunload(): void {

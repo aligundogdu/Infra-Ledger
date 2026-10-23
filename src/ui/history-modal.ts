@@ -32,7 +32,8 @@ export class HistoryModal extends Modal {
   private render(): void {
     const { contentEl } = this;
     contentEl.empty();
-    const ic = this.plugin.index.snapshot.byId.get(this.id)?.find((c) => c.path === this.path);
+    const path = this.plugin.paths.current(this.path);
+    const ic = this.plugin.index.snapshot.byId.get(this.id)?.find((c) => c.path === path);
     if (!ic) {
       this.titleEl.setText("History");
       contentEl.createEl("p", { text: `Credential "${this.id}" is no longer in this note.` });
